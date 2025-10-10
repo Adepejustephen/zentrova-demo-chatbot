@@ -1,4 +1,5 @@
 // All view templates (match chatbot.html)
+// getRoutes() – call view: remove wave indicator, keep circle only
 export function getRoutes(name = 'Zentrova') {
   return {
     welcome: () => `
@@ -74,8 +75,8 @@ export function getRoutes(name = 'Zentrova') {
           <p style="text-align:center; color: var(--muted); margin: 0 0 6px;">Talking to</p>
           <h2 style="text-align:center; font-size: 24px; font-weight: 800; margin: 0 0 8px;">${name} Agent</h2>
           <div class="call-circle idle" id="call-circle">
-            <!-- Removed toggle; keep indicator for speaking animation -->
-            <div id="call-audio-indicator" class="audio-indicator"></div>
+            <audio id="assistantAudio" autoplay></audio>
+           
           </div>
           <div style="display:flex; justify-content:center; margin-top: 12px;">
             <button id="call-end" class="call-primary">End Conversation</button>

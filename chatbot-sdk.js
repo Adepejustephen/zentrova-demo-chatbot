@@ -80,13 +80,14 @@ async function createSDK({ agentId, position, brandColor, brandName } = {}) {
   const effectivePosition = (bot && bot.widget_settings && bot.widget_settings.position) || position || 'bottom-right';
   const autoOpen = !!(bot && bot.widget_settings && bot.widget_settings.auto_open);
   const name = (bot && (bot.name || bot.organization_name)) || brandName || DEFAULT_BRAND;
+  const welcomeMessage = (bot && bot.welcome_message) || "Hello! How can I help you today?";
 
   applyBrand(effectiveBrand);
   const { toggle, actions, pill, shell, contentRoot } = createShell();
   applyPosition(effectivePosition);
 
   const routes = getRoutes(name);
-  const ctx = { chatbotID, bot, brandColor: effectiveBrand, position: effectivePosition, brandName: name };
+  const ctx = { chatbotID, bot, brandColor: effectiveBrand, position: effectivePosition, brandName: name, welcomeMessage };
   const router = new Router(contentRoot, routes, () => bindViewEvents(router, ctx));
 
   // Seed persistent session id if missing

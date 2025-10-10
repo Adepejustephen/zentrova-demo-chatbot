@@ -1,6 +1,6 @@
 // Call module: handle call-welcome, precall, and live call lifecycle
+// Module globals
 const BASE_URL = 'https://zentrova-ai.mygrantgenie.com/api/v1';
-
 let callWS = null;
 let callAudioContext = null;
 let callAudioSource = null;
@@ -11,7 +11,15 @@ let callInitInProgress = false;
 // NEW: termination + current playback handle
 let callTerminated = false;
 let currentPlaybackSource = null;
-
+let pc = null;
+let dataChannel = null;
+let localStream = null;
+let playbackAudioContext = null;
+let playbackAnalyser = null;
+let playbackSourceNode = null;
+let playbackMonitorRAF = null;
+// cleanupCall()
+// cleanupCall(): stop touching wave indicator since it was removed
 function cleanupCall() {
   try {
     callTerminated = true;
@@ -34,6 +42,21 @@ function cleanupCall() {
     // close websocket
     if (callWS) { try { if (callWS.readyState === WebSocket.OPEN) callWS.close(1000, 'User ended call'); } catch(_){} callWS = null; }
     if (callEndInterval) { clearInterval(callEndInterval); callEndInterval = null; }
+    // NEW: close WebRTC resources
+    try {
+      if (dataChannel) { try { dataChannel.close(); } catch(_){} dataChannel = null; }
+      if (pc) { try { pc.close(); } catch(_){} pc = null; }
+      if (localStream) { try { localStream.getTracks().forEach(t => t.stop()); } catch(_){} localStream = null; }
+      const assistantAudio = document.getElementById('assistantAudio');
+      if (assistantAudio) assistantAudio.srcObject = null;
+      // NEW: stop playback monitor
+      if (playbackMonitorRAF) { cancelAnimationFrame(playbackMonitorRAF); playbackMonitorRAF = null; }
+      try { if (playbackAnalyser) playbackAnalyser.disconnect(); } catch(_) {}
+      playbackAnalyser = null;
+      try { if (playbackSourceNode) playbackSourceNode.disconnect(); } catch(_) {}
+      playbackSourceNode = null;
+      if (playbackAudioContext) { try { playbackAudioContext.close(); } catch(_) {} playbackAudioContext = null; }
+    } catch (_) {}
     micActive = false;
     callInitInProgress = false; // guard reset
   } catch (_) {}
@@ -224,14 +247,10 @@ function connectCallWebSocket(wsUrl, configurePayload, attempt = 0) {
         dispatchCallStatus('mic_error', { error: err?.message || 'Microphone error' });
       }
     } else if (type === 'audio_response_chunk') {
-      const indicator = document.getElementById('call-audio-indicator');
-      indicator && indicator.classList.add('active');
       const circle = document.getElementById('call-circle');
       circle && circle.classList.add('responding');
       playAudioChunk(msg.audio_data);
     } else if (type === 'audio_response_complete') {
-      const indicator = document.getElementById('call-audio-indicator');
-      indicator && indicator.classList.remove('active');
       const circle = document.getElementById('call-circle');
       circle && circle.classList.remove('responding');
       if (audioQueue.length === 0) nextPlayTime = 0;
@@ -262,6 +281,7 @@ function connectCallWebSocket(wsUrl, configurePayload, attempt = 0) {
 
 export function bindCallViewEvents(router, ctx) {
   const page = router.getPage();
+  const conversationId = getSessionId();
 
   if (page === 'call-welcome') {
     const back = document.getElementById('call-welcome-back');
@@ -321,14 +341,17 @@ export function bindCallViewEvents(router, ctx) {
         });
         if (!res.ok) throw new Error('Call init failed');
         const data = await res.json();
-        const info = data && data.connection_info;
-        if (!info || !info.websocket_url) throw new Error('Missing WebSocket URL');
-
-        // Ensure POST finished before attempting websocket; optional short delay to allow provisioning
-        const wsUrl = normalizeWSUrl(info.websocket_url);
-        const cfg = info.configure_payload || {};
+        // Retain precall API for backend tracking; ignore websocket_url in favor of WebRTC
         await new Promise(r => setTimeout(r, 200));
-        connectCallWebSocket(wsUrl, cfg);
+
+        const bot = ctx && ctx.bot;
+        const agentId = ctx && ctx.chatbotID; // use chatbotID
+        const language = (bot && bot.language) || 'English';
+        const voice = (bot && bot.voice) || 'alloy';
+        const welcomeMessage = (bot && bot.welcome_message) || 'Hello! How can I assist you today?';
+
+        // Start WebRTC session (new-chat.html approach)
+        startRTCSession({ agentId, language, voice, welcomeMessage });
 
         router.setPage('call');
       } catch (err) {
@@ -359,9 +382,189 @@ export function bindCallViewEvents(router, ctx) {
     back && back.addEventListener('click', () => { callTerminated = true; cleanupCall(); router.setPage('call-welcome'); });
     end && end.addEventListener('click', () => { callTerminated = true; cleanupCall(); router.setPage('call-welcome'); });
 
-    // Removed toggle recording functionality
-    // (No mic toggle; streaming controlled by system and End button)
+    async function endAndClose() {
+      // const conversationId = getSessionId();
+      try {
+        await fetch(`${BASE_URL}/chatbots/conversations/${encodeURIComponent(conversationId)}/end/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (_) {  }
+      callTerminated = true;
+      cleanupCall();
+      router.setPage('call-welcome');
+    }
 
+    back && back.addEventListener('click', (e) => { e.preventDefault(); endAndClose(); });
+    end && end.addEventListener('click', (e) => { e.preventDefault(); endAndClose(); });
     return;
   }
+
+ 
+}
+
+// NEW: WebRTC ephemeral token fetch (same approach as new-chat.html)
+async function fetchEphemeralToken(agentId, language, voice, welcomeMessage) {
+  const url = new URL('https://zentrova-chatbot.mygrantgenie.com/realtime/token', window.location.origin);
+  if (voice) url.searchParams.set('voice', voice);
+  if (agentId) url.searchParams.set('agent_id', agentId);
+  if (language) url.searchParams.set('language', language);
+  if (welcomeMessage) url.searchParams.set('welcome_message', welcomeMessage);
+  const response = await fetch(url.toString());
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to obtain token: ${errorText}`);
+  }
+  const payload = await response.json();
+  if (!payload.value) {
+    throw new Error('Token response missing value field');
+  }
+  return payload.value;
+}
+
+// NEW: handle function calls over RTC data channel (optional RAG search)
+async function handleFunctionCall(functionName, functionCallId, args) {
+  try {
+    const parsedArgs = JSON.parse(args);
+    if (functionName === 'search_knowledge_base') {
+      const response = await fetch('https://zentrova-chatbot.mygrantgenie.com/realtime/function-call', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ function_name: functionName, arguments: parsedArgs })
+      });
+      if (!response.ok) throw new Error(`Function call failed: ${response.statusText}`);
+      const result = await response.json();
+      if (dataChannel && dataChannel.readyState === 'open') {
+        const outputEvent = {
+          type: 'conversation.item.create',
+          item: { type: 'function_call_output', call_id: functionCallId, output: JSON.stringify(result) }
+        };
+        dataChannel.send(JSON.stringify(outputEvent));
+        dataChannel.send(JSON.stringify({ type: 'response.create' }));
+      }
+    }
+  } catch (error) {
+    if (dataChannel && dataChannel.readyState === 'open') {
+      const outputEvent = {
+        type: 'conversation.item.create',
+        item: { type: 'function_call_output', call_id: functionCallId, output: JSON.stringify({ error: error.message }) }
+      };
+      dataChannel.send(JSON.stringify(outputEvent));
+    }
+  }
+}
+
+// NEW: WebRTC session (mirrors new-chat.html, integrated with call UI)
+async function startRTCSession({ agentId, language, voice, welcomeMessage }) {
+  try {
+    dispatchCallStatus('connecting');
+    const ephemeralKey = await fetchEphemeralToken(agentId, language, voice, welcomeMessage);
+
+    pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+
+    pc.ontrack = (event) => {
+      const assistantAudio = document.getElementById('assistantAudio');
+     
+      if (assistantAudio) {
+        assistantAudio.srcObject = event.streams[0];
+        assistantAudio.play().catch(() => {});
+      }
+    
+      startPlaybackMonitor(event.streams[0]);
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      if (pc.iceConnectionState === 'connected') dispatchCallStatus('connected');
+      if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
+        dispatchCallStatus('error', { error: 'Connection lost' });
+       
+      }
+    };
+
+    // Mic capture for RTC
+    localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
+    dispatchCallStatus('mic_granted');
+
+    // Data channel (events)
+    dataChannel = pc.createDataChannel('oai-events');
+    dataChannel.onopen = () => {
+      dispatchCallStatus('configured');
+      // Trigger initial response (uses welcome_message configured server-side)
+      dataChannel.send(JSON.stringify({ type: 'response.create' }));
+    };
+
+    dataChannel.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        const circle = document.getElementById('call-circle');
+        if (payload.type === 'response.audio.delta') {
+          circle && circle.classList.add('responding');
+        } else if (payload.type === 'response.audio.done') {
+          circle && circle.classList.remove('responding');
+        } else if (payload.type === 'response.function_call_arguments.done') {
+          handleFunctionCall(payload.name, payload.call_id, payload.arguments);
+        } else if (payload.type === 'response.done') {
+          dispatchCallStatus('connected');
+        }
+      } catch (_) {
+        // Non-JSON
+      }
+    };
+
+    dataChannel.onerror = (error) => {
+      dispatchCallStatus('error', { error: 'Data channel error' });
+    };
+
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+
+    // Send SDP to OpenAI
+    const sdpResponse = await fetch('https://api.openai.com/v1/realtime/calls', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${ephemeralKey}`, 'Content-Type': 'application/sdp' },
+      body: offer.sdp,
+    });
+    if (!sdpResponse.ok) {
+      const errText = await sdpResponse.text();
+      throw new Error(`OpenAI SDP error ${sdpResponse.status}: ${errText}`);
+    }
+    const answer = await sdpResponse.text();
+    await pc.setRemoteDescription({ type: 'answer', sdp: answer });
+  } catch (error) {
+    dispatchCallStatus('error', { error: error.message });
+    cleanupCall();
+  }
+}
+
+// Helper: monitor assistant audio levels and toggle circle animation
+function startPlaybackMonitor(stream) {
+  const circle = document.getElementById('call-circle');
+  if (!circle || !stream) return;
+  try {
+    if (playbackMonitorRAF) { cancelAnimationFrame(playbackMonitorRAF); playbackMonitorRAF = null; }
+    if (playbackAudioContext) { try { playbackAudioContext.close(); } catch(_){} playbackAudioContext = null; }
+
+    playbackAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+    playbackSourceNode = playbackAudioContext.createMediaStreamSource(stream);
+    playbackAnalyser = playbackAudioContext.createAnalyser();
+    playbackAnalyser.fftSize = 2048;
+    playbackSourceNode.connect(playbackAnalyser);
+
+    const data = new Uint8Array(playbackAnalyser.frequencyBinCount);
+    function tick() {
+      try {
+        playbackAnalyser.getByteTimeDomainData(data);
+        let sum = 0;
+        for (let i = 0; i < data.length; i++) {
+          const v = (data[i] - 128) / 128;
+          sum += v * v;
+        }
+        const rms = Math.sqrt(sum / data.length);
+        if (rms > 0.02) circle.classList.add('responding'); else circle.classList.remove('responding');
+      } catch (_) {}
+      playbackMonitorRAF = requestAnimationFrame(tick);
+    }
+    tick();
+  } catch (_) {}
 }

@@ -9,6 +9,7 @@ export function importFonts() {
   importStyleLink('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css');
   importStyleLink('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap');
 }
+// injectStyles(): stop injecting wave + status bar CSS; circle animation remains
 export function injectStyles() {
   const css = `
     :root { --brand: #5b2a86; --bg: #ffffff; --text: #1f2937; --muted: #6b7280; --bot-bg: #eef2f7; --user-bg: #eef2ff; --radius: 12px; --radius-lg: 18px; --s-1: 8px; --s-2: 12px; --s-3: 16px; --shadow-1: 0 8px 24px rgba(0, 0, 0, 0.08); --shadow-2: 0 10px 24px rgba(0, 0, 0, 0.12); }
@@ -72,8 +73,7 @@ export function injectStyles() {
     .chat-header { display: flex; align-items: center; gap: 8px; padding: 14px 16px; background: var(--brand); color: #fff; border-radius: 14px 14px 0 0; font-weight: 700; }
     .chat-header .icon-btn { color: #fff; font-size: 16px; }
     .call-circle { width: 120px; height: 120px; border-radius: 50%; background: var(--brand); margin: 16px auto 16px; }
-    /* Speaking pulse on bot response */
-    .call-circle.responding { animation: speakingPulse 1s ease-in-out infinite; }
+    .call-circle.responding { animation: speakingPulse 0.5s ease-in-out infinite; }
     @keyframes speakingPulse { 0% { transform: scale(1); } 50% { transform: scale(1.04); } 100% { transform: scale(1); } }
     .chatbox { background: #fff; }
     .chat p { white-space: pre-line; }
@@ -120,7 +120,6 @@ export function injectStyles() {
     .call-circle button { background: transparent; border: 0; color: #fff; font-weight: 800; font-size: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; }
     #call-icon { font-size: 28px; margin-bottom: 8px; }
     #call-label { font-size: 18px; font-weight: 800; letter-spacing: .5px; }
-    
     /* Status bar */
     .call-status { margin: 12px var(--s-2);  border-radius: 12px; background: rgba(255,255,255,.06); color: var(--muted); text-align: right; font-size: 12px;}
     .call-status.connecting { background: rgba(18,194,103,.18); color: #b8f1d5; }
@@ -133,9 +132,20 @@ export function injectStyles() {
     .call-status.status-mic_error, .call-status.status-error { background:#fee2e2; color:#7f1d1d; border:1px solid #fca5a5; }
     .call-status.status-closed { background:#f3f4f6; color:#374151; border:1px solid #e5e7eb; }
   `;
+  // NEW: RTC audio indicator styling
+  const rtcAudioCss = `
+    .audio-indicator { display: none; justify-content: center; align-items: center; gap: 8px; padding: 16px; background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1)); border-radius: 12px; }
+    .audio-indicator.active { display: flex; }
+    .audio-indicator span { width: 6px; border-radius: 10px; background: linear-gradient(135deg, #667eea, #764ba2); animation: aiPulse 1s ease-in-out infinite; }
+    .audio-indicator span:nth-child(2) { animation-delay: 0.15s; }
+    .audio-indicator span:nth-child(3) { animation-delay: 0.3s; }
+    .audio-indicator span:nth-child(4) { animation-delay: 0.45s; }
+    @keyframes aiPulse { 0%, 100% { height: 12px; } 50% { height: 32px; } }
+  `;
   const style = document.createElement('style');
   style.type = 'text/css';
-  style.appendChild(document.createTextNode(css + callStatusCss))
+  // Only inject base css; omit callStatusCss & rtcAudioCss
+  style.appendChild(document.createTextNode(css));
   document.head.appendChild(style);
 }
 export function applyBrand(brandColor) {

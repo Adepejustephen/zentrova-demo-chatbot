@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zentrova Realtime Voice Chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .config-form {
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+
+        .status {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status.connecting {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        button {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .connect-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .connect-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .disconnect-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        .disconnect-btn:hover:not(:disabled) {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(220, 53, 69, 0.4);
+        }
+
+        .audio-indicator {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            margin: 20px 0;
+        }
+
+        .audio-indicator.active {
+            display: flex;
+        }
+
+        .audio-bar {
+            width: 4px;
+            background: #667eea;
+            border-radius: 2px;
+            animation: wave 1s ease-in-out infinite;
+        }
+
+        .audio-bar:nth-child(1) { height: 20px; animation-delay: 0s; }
+        .audio-bar:nth-child(2) { height: 30px; animation-delay: 0.1s; }
+        .audio-bar:nth-child(3) { height: 25px; animation-delay: 0.2s; }
+        .audio-bar:nth-child(4) { height: 35px; animation-delay: 0.3s; }
+        .audio-bar:nth-child(5) { height: 20px; animation-delay: 0.4s; }
+
+        @keyframes wave {
+            0%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(0.5); }
+        }
+
+        .events-log {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .events-log h3 {
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .event-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 5px;
+            font-size: 12px;
+            word-break: break-word;
+        }
+
+        .event-item.info {
+            border-left: 4px solid #17a2b8;
+        }
+
+        .event-item.success {
+            border-left: 4px solid #28a745;
+        }
+
+        .event-item.error {
+            border-left: 4px solid #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎙️ Zentrova Voice Chat</h1>
+        <p class="subtitle">Realtime AI Conversation with RAG Context</p>
+        
+        <div class="config-form" id="configForm">
+            <div class="form-group">
+                <label for="agentId">Agent ID</label>
+                <input type="text" id="agentId" placeholder="Enter your agent ID" 
+                       value="3f875893-9755-4f74-b209-4dd31348b2e5">
+            </div>
+            
+            <div class="form-group">
+                <label for="voice">Voice</label>
+                <select id="voice">
+                    <option value="alloy">Alloy</option>
+                    <option value="echo">Echo</option>
+                    <option value="fable">Fable</option>
+                    <option value="onyx">Onyx</option>
+                    <option value="nova">Nova</option>
+                    <option value="shimmer">Shimmer</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="ragSources">RAG Sources</label>
+                <input type="number" id="ragSources" value="5" min="1" max="10">
+            </div>
+            
+            <div class="form-group checkbox-group">
+                <input type="checkbox" id="useRag" checked>
+                <label for="useRag">Use RAG Context</label>
+            </div>
+        </div>
+        
+        <div class="status" id="status">Disconnected</div>
+        
+        <div class="audio-indicator" id="audioIndicator">
+            <div class="audio-bar"></div>
+            <div class="audio-bar"></div>
+            <div class="audio-bar"></div>
+            <div class="audio-bar"></div>
+            <div class="audio-bar"></div>
+        </div>
+        
+        <div class="controls">
+            <button id="connectBtn" class="connect-btn">Start Voice Chat</button>
+            <button id="disconnectBtn" class="disconnect-btn" disabled>End Chat</button>
+        </div>
+        
+        <div class="events-log">
+            <h3>📝 Events Log</h3>
+            <div id="eventsContainer"></div>
+        </div>
+    </div>
+
+    <audio id="audioElement" autoplay></audio>
+
+    <script>
+        let ws = null;
+        let sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        let mediaRecorder = null;
+        let audioContext = null;
+        let statusElement = document.getElementById('status');
+        let connectBtn = document.getElementById('connectBtn');
+        let disconnectBtn = document.getElementById('disconnectBtn');
+        let eventsContainer = document.getElementById('eventsContainer');
+        let audioIndicator = document.getElementById('audioIndicator');
+        let audioElement = document.getElementById('audioElement');
+        let configForm = document.getElementById('configForm');
+        
+        // Audio playback queue to prevent overlapping
+        let audioQueue = [];
+        let isPlayingAudio = false;
+        let nextPlayTime = 0;
+
+        function updateStatus(message, type = '') {
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+        }
+
+        function logEvent(message, type = 'info') {
+            const eventItem = document.createElement('div');
+            eventItem.className = `event-item ${type}`;
+            eventItem.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            eventsContainer.insertBefore(eventItem, eventsContainer.firstChild);
+            
+            // Keep only last 20 events
+            while (eventsContainer.children.length > 20) {
+                eventsContainer.removeChild(eventsContainer.lastChild);
+            }
+        }
+
+        async function connect() {
+            try {
+                updateStatus('Connecting...', 'connecting');
+                connectBtn.disabled = true;
+                configForm.style.opacity = '0.5';
+                configForm.style.pointerEvents = 'none';
+                
+                // Get configuration
+                const agentId = document.getElementById('agentId').value.trim();
+                const voice = document.getElementById('voice').value;
+                const ragSources = parseInt(document.getElementById('ragSources').value);
+                const useRag = document.getElementById('useRag').checked;
+                
+                if (!agentId) {
+                    throw new Error('Agent ID is required');
+                }
+                
+                // Connect WebSocket
+                // const wsUrl = `ws://localhost:8000/ws/${sessionId}`;
+                const wsUrl = `wss://zentrova-chatbot.mygrantgenie.com/ws/ff1460b1-5feb-4684-85e3-a923fb7355c8`;
+                logEvent(`Connecting to ${wsUrl}`, 'info');
+                
+                ws = new WebSocket(wsUrl);
+                
+                ws.onopen = async () => {
+                    logEvent('WebSocket connected', 'success');
+                    
+                    // Send single configuration message
+                    const config = {
+                        type: "configure",
+                        agent_id: agentId,
+                        voice: voice,
+                        rag_sources: ragSources,
+                        use_rag: useRag
+                    };
+                    
+                    ws.send(JSON.stringify(config));
+                    logEvent('Configuration sent', 'info');
+                };
+                
+                ws.onmessage = async (event) => {
+                    const message = JSON.parse(event.data);
+                    handleServerMessage(message);
+                };
+                
+                ws.onerror = (error) => {
+                    logEvent(`WebSocket error: ${error}`, 'error');
+                    updateStatus('Connection error', 'error');
+                };
+                
+                ws.onclose = () => {
+                    logEvent('WebSocket closed', 'info');
+                    disconnect();
+                };
+                
+            } catch (error) {
+                logEvent(`Error: ${error.message}`, 'error');
+                updateStatus(`Failed: ${error.message}`, 'error');
+                connectBtn.disabled = false;
+                configForm.style.opacity = '1';
+                configForm.style.pointerEvents = 'auto';
+            }
+        }
+
+        async function handleServerMessage(message) {
+            const type = message.type;
+            
+            if (type === 'configured') {
+                logEvent(`Configured: ${message.agent_id}, Realtime: ${message.realtime_enabled}`, 'success');
+                updateStatus('Connected - Speak now!', 'connected');
+                disconnectBtn.disabled = false;
+                
+                // Start audio capture
+                await startAudioCapture();
+                
+            } else if (type === 'audio_response_chunk') {
+                // Receive audio from AI
+                audioIndicator.classList.add('active');
+                playAudioChunk(message.audio_data);
+                
+            } else if (type === 'audio_response_complete') {
+                audioIndicator.classList.remove('active');
+                logEvent('AI finished speaking', 'success');
+                // Reset play time when response is complete
+                if (audioQueue.length === 0) {
+                    nextPlayTime = 0;
+                }
+                
+            } else if (type === 'rag_context_applied') {
+                logEvent(`RAG: "${message.transcription}" (${message.sources_count} sources)`, 'info');
+                
+            } else if (type === 'error') {
+                logEvent(`Error: ${message.error}`, 'error');
+                updateStatus(`Error: ${message.error}`, 'error');
+                
+            } else if (type === 'text_sent') {
+                logEvent(`Sent: "${message.text}" (${message.sources_count} sources)`, 'info');
+                
+            } else {
+                console.log('Server message:', message);
+            }
+        }
+
+        async function startAudioCapture() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        sampleRate: 24000,
+                        channelCount: 1,
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    } 
+                });
+                
+                logEvent('Microphone access granted', 'success');
+                
+                // Use Web Audio API to capture PCM16 directly
+                audioContext = new (window.AudioContext || window.webkitAudioContext)({
+                    sampleRate: 24000
+                });
+                
+                const source = audioContext.createMediaStreamSource(stream);
+                const processor = audioContext.createScriptProcessor(4096, 1, 1);
+                
+                processor.onaudioprocess = (e) => {
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        // Get PCM float32 data
+                        const float32Data = e.inputBuffer.getChannelData(0);
+                        
+                        // Convert to PCM16
+                        const pcm16Data = new Int16Array(float32Data.length);
+                        for (let i = 0; i < float32Data.length; i++) {
+                            // Clamp to [-1, 1] and convert to 16-bit integer
+                            const s = Math.max(-1, Math.min(1, float32Data[i]));
+                            pcm16Data[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                        }
+                        
+                        // Convert to base64
+                        const uint8Array = new Uint8Array(pcm16Data.buffer);
+                        const base64Audio = btoa(String.fromCharCode.apply(null, uint8Array));
+                        
+                        // Send PCM16 chunk
+                        ws.send(JSON.stringify({
+                            type: 'audio_chunk',
+                            audio_data: base64Audio,
+                            format: 'pcm16'
+                        }));
+                    }
+                };
+                
+                source.connect(processor);
+                processor.connect(audioContext.destination);
+                
+                // Store for cleanup
+                window.audioProcessor = processor;
+                window.audioSource = source;
+                
+                // Send end_audio every 5 seconds for turn-taking
+                setInterval(() => {
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({
+                            type: 'end_audio',
+                            format: 'pcm16'
+                        }));
+                    }
+                }, 5000);
+                
+            } catch (error) {
+                logEvent(`Microphone error: ${error.message}`, 'error');
+                updateStatus('Microphone access denied', 'error');
+            }
+        }
+
+        function playAudioChunk(base64Audio) {
+            try {
+                // Decode base64 PCM16 audio
+                const binaryString = atob(base64Audio);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                
+                // Create audio context if needed
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)({
+                        sampleRate: 24000
+                    });
+                }
+                
+                // Convert PCM16 to AudioBuffer
+                const int16Array = new Int16Array(bytes.buffer);
+                const float32Array = new Float32Array(int16Array.length);
+                for (let i = 0; i < int16Array.length; i++) {
+                    float32Array[i] = int16Array[i] / 32768.0;
+                }
+                
+                const audioBuffer = audioContext.createBuffer(1, float32Array.length, 24000);
+                audioBuffer.getChannelData(0).set(float32Array);
+                
+                // Add to queue instead of playing immediately
+                audioQueue.push(audioBuffer);
+                
+                // Start processing queue if not already playing
+                if (!isPlayingAudio) {
+                    playNextInQueue();
+                }
+                
+            } catch (error) {
+                console.error('Error decoding audio:', error);
+            }
+        }
+
+        function playNextInQueue() {
+            if (audioQueue.length === 0) {
+                isPlayingAudio = false;
+                return;
+            }
+            
+            isPlayingAudio = true;
+            const audioBuffer = audioQueue.shift();
+            
+            try {
+                const source = audioContext.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(audioContext.destination);
+                
+                // Calculate when to start this chunk
+                const currentTime = audioContext.currentTime;
+                const startTime = Math.max(currentTime, nextPlayTime);
+                
+                source.start(startTime);
+                
+                // Update next play time (when this chunk will finish)
+                nextPlayTime = startTime + audioBuffer.duration;
+                
+                // Schedule next chunk
+                source.onended = () => {
+                    playNextInQueue();
+                };
+                
+            } catch (error) {
+                console.error('Error playing audio:', error);
+                // Try next chunk on error
+                playNextInQueue();
+            }
+        }
+
+        function disconnect() {
+            // Clear audio queue
+            audioQueue = [];
+            isPlayingAudio = false;
+            nextPlayTime = 0;
+            
+            // Clean up audio processing
+            if (window.audioProcessor) {
+                window.audioProcessor.disconnect();
+                window.audioProcessor = null;
+            }
+            
+            if (window.audioSource) {
+                window.audioSource.disconnect();
+                window.audioSource.mediaStream.getTracks().forEach(track => track.stop());
+                window.audioSource = null;
+            }
+            
+            if (audioContext) {
+                audioContext.close();
+                audioContext = null;
+            }
+            
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+            
+            updateStatus('Disconnected', '');
+            connectBtn.disabled = false;
+            disconnectBtn.disabled = true;
+            audioIndicator.classList.remove('active');
+            configForm.style.opacity = '1';
+            configForm.style.pointerEvents = 'auto';
+            logEvent('Disconnected', 'info');
+        }
+
+        // Event listeners
+        connectBtn.addEventListener('click', connect);
+        disconnectBtn.addEventListener('click', disconnect);
+    </script>
+</body>
+</html>

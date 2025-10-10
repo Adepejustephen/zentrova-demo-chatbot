@@ -454,57 +454,16 @@ function showTyping() {
 }
 
 // Inject and update call status bar on call screen
+// updateCallStatus(): disable status bar rendering
 function updateCallStatus(status, detail) {
-  const card = document.querySelector('.call-card');
-  if (!card) return;
-
-  // Ensure status bar exists
-  let bar = document.getElementById('call-status');
-  if (!bar) {
-    bar = document.createElement('div');
-    bar.id = 'call-status';
-    bar.className = 'call-status';
-    bar.style.textAlign = 'center';
-    bar.style.margin = '8px 0';
-    bar.style.color = 'var(--muted)';
-    card.insertBefore(bar, card.firstChild);
-  }
-
-  const map = {
-    connecting: 'Connecting...',
-    connected: 'Connected. Sending configuration...',
-    configured: 'Configured. Starting microphone...',
-    mic_granted: 'Listening...',
-    mic_error: `Connection error${detail?.error ? ': ' + detail.error : ''}`,
-    error: `Connection lost${detail?.error ? ': ' + detail.error : ''}`,
-    closed: 'Disconnected'
-  };
-
-  // Update status text + variant class
-  bar.textContent = map[status] || status;
-  bar.className = `call-status ${status}`;
-
-  // Update circle state & label/icon
-  const circle = document.getElementById('call-circle');
-  const label = document.getElementById('call-label');
-  const icon = document.getElementById('call-icon');
-  const stateText = document.getElementById('call-state-text');
-
-  if (circle) {
-    const recording = status === 'mic_granted';
-    circle.classList.toggle('recording', recording);
-    circle.classList.toggle('idle', !recording);
-    if (label) label.textContent = recording ? 'STOP' : 'RECORD';
-    if (icon) icon.className = recording ? 'bi bi-mic-mute' : 'bi bi-mic';
-  }
-
-  if (stateText) stateText.textContent = map[status] || status;
+// No status UI; keep behavior minimal
+return;
 }
 
+// Remove status-driven End button disable/spinner
 window.addEventListener('chatbot-call-status', (ev) => {
-  updateCallStatus(ev.detail.status, ev.detail);
+// No-op; status UI removed
 });
-// Status bar (already wired) – also toggle End button spinner
 window.addEventListener('chatbot-call-status', (ev) => {
   const status = ev?.detail?.status || '';
   const endBtn = document.getElementById('call-end');
