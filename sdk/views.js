@@ -113,7 +113,7 @@ export function getRoutes(name = 'Zentrova') {
           <p class="prechat-intro">Hi, Welcome to (${name}). Let us know you and how we may help you?</p>
           <form id="precall-form" class="prechat-form" onsubmit="return false;">
             <input id="precall-name" type="text" placeholder="Name" />
-            <input id="precall-email" type="email" placeholder="Email" />
+           
             <div class="country-row">
               <select id="precall-country">
                 <option value="+234">🇳🇬 +234</option>

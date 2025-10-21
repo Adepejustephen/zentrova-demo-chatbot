@@ -1,608 +1,1107 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zentrova Realtime Voice Chat</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zentrova RAG Voice Assistant</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
 
-        .container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 600px;
-            width: 100%;
-        }
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.3);
+      max-width: 600px;
+      width: 100%;
+      padding: 40px;
+      display: grid;
+      gap: 24px;
+    }
 
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 28px;
-        }
+    h1 {
+      text-align: center;
+      font-size: 32px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
 
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
-        }
+    .subtitle {
+      text-align: center;
+      color: #6b7280;
+      font-size: 15px;
+      margin-top: -12px;
+    }
 
-        .config-form {
-            margin-bottom: 20px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-        }
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-weight: 600;
+      color: #111827;
+      font-size: 14px;
+    }
 
-        .form-group {
-            margin-bottom: 15px;
-        }
+    input[type="text"], select {
+      border: 2px solid rgba(148, 163, 184, 0.4);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 16px;
+      transition: all 0.2s ease;
+      background: white;
+    }
 
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #333;
-            font-weight: 500;
-        }
+    input[type="text"]:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+    }
 
-        input, select {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #e0e0e0;
-            border-radius: 5px;
-            font-size: 14px;
-        }
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
 
-        input:focus, select:focus {
-            outline: none;
-            border-color: #667eea;
-        }
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-size: 15px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
 
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+    button.primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
 
-        .checkbox-group input[type="checkbox"] {
-            width: auto;
-        }
+    button.danger {
+      background: linear-gradient(135deg, #f43f5e, #dc2626);
+      color: white;
+      box-shadow: 0 10px 25px rgba(244, 63, 94, 0.4);
+    }
 
-        .status {
-            background: #f0f0f0;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: center;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
+    button:disabled {
+      cursor: not-allowed;
+      filter: saturate(0.4) brightness(0.9);
+      box-shadow: none;
+    }
 
-        .status.connected {
-            background: #d4edda;
-            color: #155724;
-        }
+    button:not(:disabled):hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px rgba(102, 126, 234, 0.5);
+    }
 
-        .status.error {
-            background: #f8d7da;
-            color: #721c24;
-        }
+    .status {
+      border-radius: 14px;
+      padding: 16px 18px;
+      background: rgba(241, 245, 249, 0.9);
+      color: #0f172a;
+      font-weight: 600;
+      text-align: center;
+      transition: all 0.3s ease;
+      font-size: 14px;
+    }
 
-        .status.connecting {
-            background: #fff3cd;
-            color: #856404;
-        }
+    .status[data-state="connecting"] {
+      background: rgba(251, 191, 36, 0.2);
+      color: #92400e;
+      border: 2px solid rgba(251, 191, 36, 0.4);
+    }
 
-        .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
+    .status[data-state="connected"] {
+      background: rgba(34, 197, 94, 0.2);
+      color: #166534;
+      border: 2px solid rgba(34, 197, 94, 0.4);
+    }
 
-        button {
-            padding: 15px 30px;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+    .status[data-state="error"] {
+      background: rgba(239, 68, 68, 0.2);
+      color: #991b1b;
+      border: 2px solid rgba(239, 68, 68, 0.4);
+    }
 
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+    .status[data-state="searching"] {
+      background: rgba(59, 130, 246, 0.2);
+      color: #1e40af;
+      border: 2px solid rgba(59, 130, 246, 0.4);
+    }
 
-        .connect-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
+    textarea {
+      border: 2px solid rgba(148, 163, 184, 0.35);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 15px;
+      resize: vertical;
+      min-height: 100px;
+      font-family: inherit;
+    }
 
-        .connect-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
-        }
+    textarea:disabled {
+      background: rgba(241, 245, 249, 0.6);
+      cursor: not-allowed;
+    }
 
-        .disconnect-btn {
-            background: #dc3545;
-            color: white;
-        }
+    textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+    }
 
-        .disconnect-btn:hover:not(:disabled) {
-            background: #c82333;
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(220, 53, 69, 0.4);
-        }
+    .audio-indicator {
+      display: none;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+      border-radius: 12px;
+    }
 
-        .audio-indicator {
-            display: none;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            margin: 20px 0;
-        }
+    .audio-indicator.active {
+      display: flex;
+    }
 
-        .audio-indicator.active {
-            display: flex;
-        }
+    .audio-indicator span {
+      width: 6px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      animation: pulse 1s ease-in-out infinite;
+    }
 
-        .audio-bar {
-            width: 4px;
-            background: #667eea;
-            border-radius: 2px;
-            animation: wave 1s ease-in-out infinite;
-        }
+    .audio-indicator span:nth-child(2) { animation-delay: 0.15s; }
+    .audio-indicator span:nth-child(3) { animation-delay: 0.3s; }
+    .audio-indicator span:nth-child(4) { animation-delay: 0.45s; }
 
-        .audio-bar:nth-child(1) { height: 20px; animation-delay: 0s; }
-        .audio-bar:nth-child(2) { height: 30px; animation-delay: 0.1s; }
-        .audio-bar:nth-child(3) { height: 25px; animation-delay: 0.2s; }
-        .audio-bar:nth-child(4) { height: 35px; animation-delay: 0.3s; }
-        .audio-bar:nth-child(5) { height: 20px; animation-delay: 0.4s; }
+    @keyframes pulse {
+      0%, 100% { height: 12px; }
+      50% { height: 32px; }
+    }
 
-        @keyframes wave {
-            0%, 100% { transform: scaleY(1); }
-            50% { transform: scaleY(0.5); }
-        }
+    .rag-info {
+      background: rgba(59, 130, 246, 0.1);
+      border: 2px solid rgba(59, 130, 246, 0.3);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 13px;
+      color: #1e40af;
+      line-height: 1.6;
+      display: none;
+    }
 
-        .events-log {
-            margin-top: 20px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            max-height: 250px;
-            overflow-y: auto;
-        }
+    .rag-info.active {
+      display: block;
+    }
 
-        .events-log h3 {
-            margin-bottom: 10px;
-            color: #333;
-            font-size: 16px;
-        }
+    .rag-info strong {
+      display: block;
+      margin-bottom: 6px;
+      color: #1e3a8a;
+    }
 
-        .event-item {
-            padding: 8px;
-            margin: 5px 0;
-            background: white;
-            border-radius: 5px;
-            font-size: 12px;
-            word-break: break-word;
-        }
+    .events-log {
+      background: rgba(241, 245, 249, 0.9);
+      border-radius: 16px;
+      padding: 16px;
+      max-height: 280px;
+      overflow-y: auto;
+      font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+      font-size: 12px;
+      color: #1f2937;
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 8px;
+    }
 
-        .event-item.info {
-            border-left: 4px solid #17a2b8;
-        }
+    .events-log div {
+      background: white;
+      border-radius: 10px;
+      padding: 10px 12px;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+      line-height: 1.4;
+      word-break: break-word;
+    }
 
-        .event-item.success {
-            border-left: 4px solid #28a745;
-        }
+    .events-log div.function-call {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.15));
+      border-left: 4px solid #3b82f6;
+    }
 
-        .event-item.error {
-            border-left: 4px solid #dc3545;
-        }
-    </style>
+    .events-log div.error {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.15));
+      border-left: 4px solid #ef4444;
+    }
+
+    audio { display: none; }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: -8px;
+    }
+
+    .custom-api-config {
+      background: rgba(249, 250, 251, 0.9);
+      border-radius: 14px;
+      padding: 18px;
+      border: 2px dashed rgba(148, 163, 184, 0.4);
+    }
+
+    .custom-api-config.has-apis {
+      border-color: rgba(102, 126, 234, 0.5);
+      background: rgba(102, 126, 234, 0.05);
+    }
+
+    .api-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .api-item {
+      background: white;
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+    }
+
+    .api-item-info {
+      flex: 1;
+    }
+
+    .api-item-name {
+      font-weight: 600;
+      color: #111827;
+      font-size: 14px;
+    }
+
+    .api-item-desc {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+
+    .api-item-remove {
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .api-item-remove:hover {
+      background: #dc2626;
+    }
+
+    .add-api-btn {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .add-api-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: #6b7280;
+      cursor: pointer;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-close:hover {
+      background: rgba(0, 0, 0, 0.05);
+      color: #111827;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      font-weight: 600;
+      font-size: 13px;
+      color: #374151;
+    }
+
+    .form-input {
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .tools-enabled {
+      background: rgba(16, 185, 129, 0.1);
+      border: 2px solid rgba(16, 185, 129, 0.3);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 13px;
+      color: #065f46;
+      display: none;
+    }
+
+    .tools-enabled.active {
+      display: block;
+    }
+
+    .tools-enabled strong {
+      display: block;
+      margin-bottom: 6px;
+      color: #047857;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎙️ Zentrova Voice Chat</h1>
-        <p class="subtitle">Realtime AI Conversation with RAG Context</p>
-        
-        <div class="config-form" id="configForm">
-            <div class="form-group">
-                <label for="agentId">Agent ID</label>
-                <input type="text" id="agentId" placeholder="Enter your agent ID" 
-                       value="3f875893-9755-4f74-b209-4dd31348b2e5">
-            </div>
-            
-            <div class="form-group">
-                <label for="voice">Voice</label>
-                <select id="voice">
-                    <option value="alloy">Alloy</option>
-                    <option value="echo">Echo</option>
-                    <option value="fable">Fable</option>
-                    <option value="onyx">Onyx</option>
-                    <option value="nova">Nova</option>
-                    <option value="shimmer">Shimmer</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="ragSources">RAG Sources</label>
-                <input type="number" id="ragSources" value="5" min="1" max="10">
-            </div>
-            
-            <div class="form-group checkbox-group">
-                <input type="checkbox" id="useRag" checked>
-                <label for="useRag">Use RAG Context</label>
-            </div>
-        </div>
-        
-        <div class="status" id="status">Disconnected</div>
-        
-        <div class="audio-indicator" id="audioIndicator">
-            <div class="audio-bar"></div>
-            <div class="audio-bar"></div>
-            <div class="audio-bar"></div>
-            <div class="audio-bar"></div>
-            <div class="audio-bar"></div>
-        </div>
-        
-        <div class="controls">
-            <button id="connectBtn" class="connect-btn">Start Voice Chat</button>
-            <button id="disconnectBtn" class="disconnect-btn" disabled>End Chat</button>
-        </div>
-        
-        <div class="events-log">
-            <h3>📝 Events Log</h3>
-            <div id="eventsContainer"></div>
-        </div>
+  <div class="card">
+    <div>
+      <h1>🧠 RAG Voice Assistant</h1>
+      <p class="subtitle">Voice conversation with intelligent knowledge retrieval & custom APIs</p>
     </div>
 
-    <audio id="audioElement" autoplay></audio>
+    <label>
+      Agent ID
+      <input type="text" id="agentId" placeholder="Enter your agent ID" />
+    </label>
 
-    <script>
-        let ws = null;
-        let sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        let mediaRecorder = null;
-        let audioContext = null;
-        let statusElement = document.getElementById('status');
-        let connectBtn = document.getElementById('connectBtn');
-        let disconnectBtn = document.getElementById('disconnectBtn');
-        let eventsContainer = document.getElementById('eventsContainer');
-        let audioIndicator = document.getElementById('audioIndicator');
-        let audioElement = document.getElementById('audioElement');
-        let configForm = document.getElementById('configForm');
+    <label>
+      Language
+      <select id="language">
+        <option value="English">English</option>
+        <option value="Spanish">Spanish</option>
+        <option value="French">French</option>
+        <option value="German">German</option>
+        <option value="Portuguese">Portuguese</option>
+        <option value="Italian">Italian</option>
+        <option value="Chinese">Chinese</option>
+        <option value="Japanese">Japanese</option>
+      </select>
+    </label>
+
+    <label>
+      Welcome Message
+      <input type="text" id="welcomeMessage" placeholder="Hello! How can I assist you today?" value="Hello! How can I assist you today?" />
+    </label>
+
+    <div class="custom-api-config" id="customApiConfig">
+      <div class="section-title">🔌 Custom API Tools</div>
+      <div class="api-list" id="apiList"></div>
+      <button class="add-api-btn" id="addApiBtn">+ Add Custom API</button>
+    </div>
+
+    <div class="checkbox-group">
+      <input type="checkbox" id="enableRag" checked />
+      <label for="enableRag">Enable RAG Knowledge Base Search</label>
+    </div>
+
+    <div class="controls">
+      <button class="primary" id="startBtn">Start Call</button>
+      <button class="danger" id="stopBtn" disabled>End Call</button>
+    </div>
+
+    <div class="status" id="status" data-state="idle">Enter your agent ID and press Start Call.</div>
+
+    <div class="audio-indicator" id="audioIndicator" aria-label="Assistant speaking">
+      <span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="rag-info" id="ragInfo">
+      <strong>🔍 Knowledge Base Search</strong>
+      <span id="ragInfoText">Searching for relevant information...</span>
+    </div>
+
+    <div class="tools-enabled" id="toolsEnabled">
+      <strong>🛠️ Tools Enabled</strong>
+      <span id="toolsEnabledList">None</span>
+    </div>
+
+    <label>
+      Send a Text Message
+      <textarea id="messageInput" placeholder="Type a message and press Send" disabled></textarea>
+    </label>
+    <button class="primary" id="sendBtn" disabled>Send Text</button>
+
+    <div>
+      <div class="section-title">📋 Events & Function Calls</div>
+      <div class="events-log" id="events"></div>
+    </div>
+  </div>
+
+  <!-- Custom API Modal -->
+  <div class="modal" id="apiModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Add Custom API Tool</h2>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Function Name *</label>
+        <input type="text" class="form-input" id="apiName" placeholder="e.g., get_weather" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Description *</label>
+        <textarea class="form-input" id="apiDescription" rows="3" placeholder="Describe what this API does and when to use it"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">API URL *</label>
+        <input type="text" class="form-input" id="apiUrl" placeholder="https://api.example.com/endpoint" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">HTTP Method</label>
+        <select class="form-input" id="apiMethod">
+          <option value="GET">GET</option>
+          <option value="POST">POST</option>
+          <option value="PUT">PUT</option>
+          <option value="DELETE">DELETE</option>
+          <option value="PATCH">PATCH</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Headers (JSON format)</label>
+        <textarea class="form-input" id="apiHeaders" rows="3" placeholder='{"Authorization": "Bearer TOKEN"}'></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Query Parameters (JSON format)</label>
+        <textarea class="form-input" id="apiQueryParams" rows="2" placeholder='{"key": "value"}'></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Request Body (JSON format)</label>
+        <textarea class="form-input" id="apiRequestBody" rows="3" placeholder='{"field": "value"}'></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Response Path (JSONPath, optional)</label>
+        <input type="text" class="form-input" id="apiResponsePath" placeholder="e.g., data.results" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Parameters Schema (JSON format)</label>
+        <textarea class="form-input" id="apiParameters" rows="8" placeholder='{"type": "object", "properties": {"city": {"type": "string", "description": "City name"}}, "required": ["city"]}'></textarea>
+      </div>
+
+      <button class="primary" id="saveApiBtn" style="width: 100%; margin-top: 10px;">Save API Tool</button>
+    </div>
+  </div>
+
+  <audio id="assistantAudio" autoplay></audio>
+
+  <script>
+    const agentInput = document.getElementById('agentId');
+    const languageSelect = document.getElementById('language');
+    const welcomeMessageInput = document.getElementById('welcomeMessage');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const statusEl = document.getElementById('status');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const eventsEl = document.getElementById('events');
+    const audioIndicator = document.getElementById('audioIndicator');
+    const assistantAudio = document.getElementById('assistantAudio');
+    const ragInfo = document.getElementById('ragInfo');
+    const ragInfoText = document.getElementById('ragInfoText');
+    const enableRagCheckbox = document.getElementById('enableRag');
+    const customApiConfig = document.getElementById('customApiConfig');
+    const apiList = document.getElementById('apiList');
+    const addApiBtn = document.getElementById('addApiBtn');
+    const apiModal = document.getElementById('apiModal');
+    const modalClose = document.getElementById('modalClose');
+    const saveApiBtn = document.getElementById('saveApiBtn');
+    const toolsEnabled = document.getElementById('toolsEnabled');
+    const toolsEnabledList = document.getElementById('toolsEnabledList');
+
+    let pc = null;
+    let dataChannel = null;
+    let localStream = null;
+    let currentAgentId = null;
+    let customApis = [];
+
+    function log(message, type = 'info') {
+      const entry = document.createElement('div');
+      if (type === 'function') {
+        entry.className = 'function-call';
+      } else if (type === 'error') {
+        entry.className = 'error';
+      }
+      entry.textContent = `${new Date().toLocaleTimeString()} — ${message}`;
+      eventsEl.prepend(entry);
+      while (eventsEl.children.length > 200) {
+        eventsEl.removeChild(eventsEl.lastChild);
+      }
+    }
+
+    function setStatus(state, message) {
+      statusEl.dataset.state = state;
+      statusEl.textContent = message;
+    }
+
+    function showRAGInfo(text) {
+      ragInfoText.textContent = text;
+      ragInfo.classList.add('active');
+      setTimeout(() => {
+        ragInfo.classList.remove('active');
+      }, 5000);
+    }
+
+    async function fetchEphemeralToken(agentId, language, welcomeMessage, enableRag, customApis) {
+      const url = 'https://zentrova-chatbot.mygrantgenie.com/realtime/token';
+      
+      const requestBody = {
+        voice: 'alloy',
+        agent_id: agentId || null,
+        language: language || 'English',
+        welcome_message: welcomeMessage || 'Hello! How can I assist you today?',
+        enable_rag: enableRag,
+        custom_apis: customApis
+      };
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to obtain token: ${errorText}`);
+      }
+      const payload = await response.json();
+      if (!payload.value) {
+        throw new Error('Token response missing value field');
+      }
+      
+      // Display enabled tools
+      if (payload.tools_enabled && payload.tools_enabled.length > 0) {
+        toolsEnabledList.textContent = payload.tools_enabled.join(', ');
+        toolsEnabled.classList.add('active');
+      }
+      
+      return payload.value;
+    }
+
+    async function handleFunctionCall(functionName, functionCallId, args) {
+      log(`🔧 Function call: ${functionName}`, 'function');
+      
+      try {
+        const parsedArgs = JSON.parse(args);
+        log(`📝 Args: ${JSON.stringify(parsedArgs)}`, 'function');
+
+        if (functionName === 'search_knowledge_base') {
+          showRAGInfo(`Searching: "${parsedArgs.query}"`);
+          setStatus('searching', '🔍 Searching knowledge base...');
+        } else {
+          // Custom API call
+          setStatus('searching', `🔌 Calling ${functionName}...`);
+          showRAGInfo(`Executing: ${functionName}`);
+        }
+
+        // Call the backend function endpoint (handles both RAG and custom APIs)
+        const response = await fetch('/realtime/function-call', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            function_name: functionName,
+            arguments: parsedArgs
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Function call failed: ${response.statusText}`);
+        }
+
+        const result = await response.json();
         
-        // Audio playback queue to prevent overlapping
-        let audioQueue = [];
-        let isPlayingAudio = false;
-        let nextPlayTime = 0;
-
-        function updateStatus(message, type = '') {
-            statusElement.textContent = message;
-            statusElement.className = `status ${type}`;
+        // Log results based on function type
+        if (functionName === 'search_knowledge_base') {
+          log(`✅ Found ${result.count} results`, 'function');
+          showRAGInfo(`Found ${result.count} relevant document(s)`);
+          setStatus('connected', '✨ Knowledge retrieved successfully');
+        } else {
+          log(`✅ ${functionName} completed`, 'function');
+          showRAGInfo(`${functionName} executed successfully`);
+          setStatus('connected', '✨ API call completed');
         }
 
-        function logEvent(message, type = 'info') {
-            const eventItem = document.createElement('div');
-            eventItem.className = `event-item ${type}`;
-            eventItem.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
-            eventsContainer.insertBefore(eventItem, eventsContainer.firstChild);
-            
-            // Keep only last 20 events
-            while (eventsContainer.children.length > 20) {
-                eventsContainer.removeChild(eventsContainer.lastChild);
+        // Send function output back to the realtime session
+        if (dataChannel && dataChannel.readyState === 'open') {
+          const outputEvent = {
+            type: 'conversation.item.create',
+            item: {
+              type: 'function_call_output',
+              call_id: functionCallId,
+              output: JSON.stringify(result)
             }
-        }
+          };
+          dataChannel.send(JSON.stringify(outputEvent));
 
-        async function connect() {
-            try {
-                updateStatus('Connecting...', 'connecting');
-                connectBtn.disabled = true;
-                configForm.style.opacity = '0.5';
-                configForm.style.pointerEvents = 'none';
-                
-                // Get configuration
-                const agentId = document.getElementById('agentId').value.trim();
-                const voice = document.getElementById('voice').value;
-                const ragSources = parseInt(document.getElementById('ragSources').value);
-                const useRag = document.getElementById('useRag').checked;
-                
-                if (!agentId) {
-                    throw new Error('Agent ID is required');
-                }
-                
-                // Connect WebSocket
-                // const wsUrl = `ws://localhost:8000/ws/${sessionId}`;
-                const wsUrl = `wss://zentrova-chatbot.mygrantgenie.com/ws/ff1460b1-5feb-4684-85e3-a923fb7355c8`;
-                logEvent(`Connecting to ${wsUrl}`, 'info');
-                
-                ws = new WebSocket(wsUrl);
-                
-                ws.onopen = async () => {
-                    logEvent('WebSocket connected', 'success');
-                    
-                    // Send single configuration message
-                    const config = {
-                        type: "configure",
-                        agent_id: agentId,
-                        voice: voice,
-                        rag_sources: ragSources,
-                        use_rag: useRag
-                    };
-                    
-                    ws.send(JSON.stringify(config));
-                    logEvent('Configuration sent', 'info');
-                };
-                
-                ws.onmessage = async (event) => {
-                    const message = JSON.parse(event.data);
-                    handleServerMessage(message);
-                };
-                
-                ws.onerror = (error) => {
-                    logEvent(`WebSocket error: ${error}`, 'error');
-                    updateStatus('Connection error', 'error');
-                };
-                
-                ws.onclose = () => {
-                    logEvent('WebSocket closed', 'info');
-                    disconnect();
-                };
-                
-            } catch (error) {
-                logEvent(`Error: ${error.message}`, 'error');
-                updateStatus(`Failed: ${error.message}`, 'error');
-                connectBtn.disabled = false;
-                configForm.style.opacity = '1';
-                configForm.style.pointerEvents = 'auto';
-            }
+          // Trigger response generation
+          dataChannel.send(JSON.stringify({ type: 'response.create' }));
         }
+      } catch (error) {
+        log(`❌ Function error: ${error.message}`, 'error');
+        setStatus('error', 'Function call failed');
 
-        async function handleServerMessage(message) {
-            const type = message.type;
-            
-            if (type === 'configured') {
-                logEvent(`Configured: ${message.agent_id}, Realtime: ${message.realtime_enabled}`, 'success');
-                updateStatus('Connected - Speak now!', 'connected');
-                disconnectBtn.disabled = false;
-                
-                // Start audio capture
-                await startAudioCapture();
-                
-            } else if (type === 'audio_response_chunk') {
-                // Receive audio from AI
-                audioIndicator.classList.add('active');
-                playAudioChunk(message.audio_data);
-                
-            } else if (type === 'audio_response_complete') {
-                audioIndicator.classList.remove('active');
-                logEvent('AI finished speaking', 'success');
-                // Reset play time when response is complete
-                if (audioQueue.length === 0) {
-                    nextPlayTime = 0;
-                }
-                
-            } else if (type === 'rag_context_applied') {
-                logEvent(`RAG: "${message.transcription}" (${message.sources_count} sources)`, 'info');
-                
-            } else if (type === 'error') {
-                logEvent(`Error: ${message.error}`, 'error');
-                updateStatus(`Error: ${message.error}`, 'error');
-                
-            } else if (type === 'text_sent') {
-                logEvent(`Sent: "${message.text}" (${message.sources_count} sources)`, 'info');
-                
-            } else {
-                console.log('Server message:', message);
+        // Send error back to session
+        if (dataChannel && dataChannel.readyState === 'open') {
+          const outputEvent = {
+            type: 'conversation.item.create',
+            item: {
+              type: 'function_call_output',
+              call_id: functionCallId,
+              output: JSON.stringify({ error: error.message })
             }
+          };
+          dataChannel.send(JSON.stringify(outputEvent));
         }
+      }
+    }
 
-        async function startAudioCapture() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    audio: {
-                        sampleRate: 24000,
-                        channelCount: 1,
-                        echoCancellation: true,
-                        noiseSuppression: true,
-                        autoGainControl: true
-                    } 
-                });
-                
-                logEvent('Microphone access granted', 'success');
-                
-                // Use Web Audio API to capture PCM16 directly
-                audioContext = new (window.AudioContext || window.webkitAudioContext)({
-                    sampleRate: 24000
-                });
-                
-                const source = audioContext.createMediaStreamSource(stream);
-                const processor = audioContext.createScriptProcessor(4096, 1, 1);
-                
-                processor.onaudioprocess = (e) => {
-                    if (ws && ws.readyState === WebSocket.OPEN) {
-                        // Get PCM float32 data
-                        const float32Data = e.inputBuffer.getChannelData(0);
-                        
-                        // Convert to PCM16
-                        const pcm16Data = new Int16Array(float32Data.length);
-                        for (let i = 0; i < float32Data.length; i++) {
-                            // Clamp to [-1, 1] and convert to 16-bit integer
-                            const s = Math.max(-1, Math.min(1, float32Data[i]));
-                            pcm16Data[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-                        }
-                        
-                        // Convert to base64
-                        const uint8Array = new Uint8Array(pcm16Data.buffer);
-                        const base64Audio = btoa(String.fromCharCode.apply(null, uint8Array));
-                        
-                        // Send PCM16 chunk
-                        ws.send(JSON.stringify({
-                            type: 'audio_chunk',
-                            audio_data: base64Audio,
-                            format: 'pcm16'
-                        }));
-                    }
-                };
-                
-                source.connect(processor);
-                processor.connect(audioContext.destination);
-                
-                // Store for cleanup
-                window.audioProcessor = processor;
-                window.audioSource = source;
-                
-                // Send end_audio every 5 seconds for turn-taking
-                setInterval(() => {
-                    if (ws && ws.readyState === WebSocket.OPEN) {
-                        ws.send(JSON.stringify({
-                            type: 'end_audio',
-                            format: 'pcm16'
-                        }));
-                    }
-                }, 5000);
-                
-            } catch (error) {
-                logEvent(`Microphone error: ${error.message}`, 'error');
-                updateStatus('Microphone access denied', 'error');
-            }
-        }
+    async function startCall() {
+      const agentId = agentInput.value.trim();
+      const language = languageSelect.value;
+      const welcomeMessage = welcomeMessageInput.value.trim() || "Hello! How can I assist you today?";
+      const enableRag = enableRagCheckbox.checked;
 
-        function playAudioChunk(base64Audio) {
-            try {
-                // Decode base64 PCM16 audio
-                const binaryString = atob(base64Audio);
-                const bytes = new Uint8Array(binaryString.length);
-                for (let i = 0; i < binaryString.length; i++) {
-                    bytes[i] = binaryString.charCodeAt(i);
-                }
-                
-                // Create audio context if needed
-                if (!audioContext) {
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)({
-                        sampleRate: 24000
-                    });
-                }
-                
-                // Convert PCM16 to AudioBuffer
-                const int16Array = new Int16Array(bytes.buffer);
-                const float32Array = new Float32Array(int16Array.length);
-                for (let i = 0; i < int16Array.length; i++) {
-                    float32Array[i] = int16Array[i] / 32768.0;
-                }
-                
-                const audioBuffer = audioContext.createBuffer(1, float32Array.length, 24000);
-                audioBuffer.getChannelData(0).set(float32Array);
-                
-                // Add to queue instead of playing immediately
-                audioQueue.push(audioBuffer);
-                
-                // Start processing queue if not already playing
-                if (!isPlayingAudio) {
-                    playNextInQueue();
-                }
-                
-            } catch (error) {
-                console.error('Error decoding audio:', error);
-            }
-        }
+      currentAgentId = agentId;
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      messageInput.disabled = true;
+      sendBtn.disabled = true;
+      setStatus('connecting', 'Requesting token...');
+      
+      const toolsCount = customApis.length + (enableRag && agentId ? 1 : 0);
+      log(`🚀 Starting call with ${toolsCount} tool(s) (Language: ${language})...`);
 
-        function playNextInQueue() {
-            if (audioQueue.length === 0) {
-                isPlayingAudio = false;
-                return;
-            }
-            
-            isPlayingAudio = true;
-            const audioBuffer = audioQueue.shift();
-            
-            try {
-                const source = audioContext.createBufferSource();
-                source.buffer = audioBuffer;
-                source.connect(audioContext.destination);
-                
-                // Calculate when to start this chunk
-                const currentTime = audioContext.currentTime;
-                const startTime = Math.max(currentTime, nextPlayTime);
-                
-                source.start(startTime);
-                
-                // Update next play time (when this chunk will finish)
-                nextPlayTime = startTime + audioBuffer.duration;
-                
-                // Schedule next chunk
-                source.onended = () => {
-                    playNextInQueue();
-                };
-                
-            } catch (error) {
-                console.error('Error playing audio:', error);
-                // Try next chunk on error
-                playNextInQueue();
-            }
-        }
+      try {
+        const ephemeralKey = await fetchEphemeralToken(agentId, language, welcomeMessage, enableRag, customApis);
+        log('🔑 Ephemeral token received');
 
-        function disconnect() {
-            // Clear audio queue
-            audioQueue = [];
-            isPlayingAudio = false;
-            nextPlayTime = 0;
-            
-            // Clean up audio processing
-            if (window.audioProcessor) {
-                window.audioProcessor.disconnect();
-                window.audioProcessor = null;
-            }
-            
-            if (window.audioSource) {
-                window.audioSource.disconnect();
-                window.audioSource.mediaStream.getTracks().forEach(track => track.stop());
-                window.audioSource = null;
-            }
-            
-            if (audioContext) {
-                audioContext.close();
-                audioContext = null;
-            }
-            
-            if (ws) {
-                ws.close();
-                ws = null;
-            }
-            
-            updateStatus('Disconnected', '');
-            connectBtn.disabled = false;
-            disconnectBtn.disabled = true;
+        pc = new RTCPeerConnection({
+          iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+        });
+
+        pc.ontrack = (event) => {
+          log('🎵 Received remote audio track');
+          assistantAudio.srcObject = event.streams[0];
+          assistantAudio.play().catch((err) => log(`Audio play error: ${err.message}`, 'error'));
+          audioIndicator.classList.add('active');
+        };
+
+        pc.oniceconnectionstatechange = () => {
+          log(`🧊 ICE state: ${pc.iceConnectionState}`);
+          if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
+            setStatus('error', 'Connection lost');
             audioIndicator.classList.remove('active');
-            configForm.style.opacity = '1';
-            configForm.style.pointerEvents = 'auto';
-            logEvent('Disconnected', 'info');
+          }
+        };
+
+        log('🎤 Requesting microphone');
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
+        log('✅ Microphone access granted');
+
+        dataChannel = pc.createDataChannel('oai-events');
+        dataChannel.onopen = () => {
+          log('📡 Data channel open');
+          const toolsText = toolsCount > 0 ? `with ${toolsCount} tool(s)` : 'without tools';
+          setStatus('connected', `✅ Connected ${toolsText} (${language})`);
+          messageInput.disabled = false;
+          sendBtn.disabled = false;
+
+          // Initial greeting - trigger the welcome message
+          const initEvent = {
+            type: 'response.create'
+          };
+          dataChannel.send(JSON.stringify(initEvent));
+        };
+
+        dataChannel.onmessage = (event) => {
+          try {
+            const payload = JSON.parse(event.data);
+            
+            // Log important events
+            if (payload.type === 'response.audio.delta') {
+              audioIndicator.classList.add('active');
+            } else if (payload.type === 'response.audio.done') {
+              audioIndicator.classList.remove('active');
+            } else if (payload.type === 'response.function_call_arguments.done') {
+              // Function call detected
+              const functionName = payload.name;
+              const functionCallId = payload.call_id;
+              const args = payload.arguments;
+              handleFunctionCall(functionName, functionCallId, args);
+            } else if (payload.type === 'response.done') {
+              log('💬 Response completed');
+              setStatus('connected', '✅ Ready for next question');
+            } else if (payload.type === 'error') {
+              log(`❌ Error: ${payload.error?.message || 'Unknown error'}`, 'error');
+            }
+          } catch (err) {
+            // Non-JSON message
+            log(`📨 Binary/non-JSON message received`);
+          }
+        };
+
+        dataChannel.onerror = (error) => {
+          log(`❌ Data channel error: ${error}`, 'error');
+          setStatus('error', 'Data channel error');
+        };
+
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        log('📤 Sending SDP to OpenAI');
+        const sdpResponse = await fetch('https://api.openai.com/v1/realtime/calls', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${ephemeralKey}`,
+            'Content-Type': 'application/sdp',
+          },
+          body: offer.sdp,
+        });
+
+        if (!sdpResponse.ok) {
+          const errText = await sdpResponse.text();
+          throw new Error(`OpenAI SDP error ${sdpResponse.status}: ${errText}`);
         }
 
-        // Event listeners
-        connectBtn.addEventListener('click', connect);
-        disconnectBtn.addEventListener('click', disconnect);
-    </script>
+        const answer = await sdpResponse.text();
+        await pc.setRemoteDescription({ type: 'answer', sdp: answer });
+        log('✅ Call established with RAG capabilities');
+      } catch (error) {
+        log(`❌ Error starting call: ${error.message}`, 'error');
+        setStatus('error', error.message);
+        cleanup();
+      }
+    }
+
+    function sendText() {
+      if (!dataChannel || dataChannel.readyState !== 'open') return;
+      const text = messageInput.value.trim();
+      if (!text) return;
+
+      const createEvent = {
+        type: 'conversation.item.create',
+        item: {
+          type: 'message',
+          role: 'user',
+          content: [
+            {
+              type: 'input_text',
+              text,
+            },
+          ],
+        },
+      };
+
+      dataChannel.send(JSON.stringify(createEvent));
+      dataChannel.send(JSON.stringify({ 
+        type: 'response.create',
+        response: {
+          instructions: 'Respond in English unless the user specifically asks for another language.'
+        }
+      }));
+      log(`📤 Sent text: ${text}`);
+      messageInput.value = '';
+    }
+
+    function cleanup() {
+      if (dataChannel) {
+        try { dataChannel.close(); } catch (_) {}
+        dataChannel = null;
+      }
+      if (pc) {
+        try { pc.close(); } catch (_) {}
+        pc = null;
+      }
+      if (localStream) {
+        localStream.getTracks().forEach((track) => track.stop());
+        localStream = null;
+      }
+      audioIndicator.classList.remove('active');
+      ragInfo.classList.remove('active');
+      assistantAudio.srcObject = null;
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      messageInput.disabled = true;
+      sendBtn.disabled = true;
+      currentAgentId = null;
+    }
+
+    function stopCall() {
+      log('🛑 Ending call');
+      cleanup();
+      setStatus('idle', 'Call ended. Enter an agent ID to start again.');
+    }
+
+    // Custom API Management
+    function renderApiList() {
+      apiList.innerHTML = '';
+      
+      if (customApis.length === 0) {
+        apiList.innerHTML = '<p style="color: #6b7280; font-size: 13px; padding: 8px;">No custom APIs configured. Click "Add Custom API" to get started.</p>';
+        customApiConfig.classList.remove('has-apis');
+      } else {
+        customApiConfig.classList.add('has-apis');
+        customApis.forEach((api, index) => {
+          const item = document.createElement('div');
+          item.className = 'api-item';
+          item.innerHTML = `
+            <div class="api-item-info">
+              <div class="api-item-name">${api.name}</div>
+              <div class="api-item-desc">${api.description}</div>
+            </div>
+            <button class="api-item-remove" data-index="${index}">Remove</button>
+          `;
+          apiList.appendChild(item);
+        });
+
+        // Add remove handlers
+        document.querySelectorAll('.api-item-remove').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const index = parseInt(e.target.dataset.index);
+            customApis.splice(index, 1);
+            renderApiList();
+            log(`🗑️ Removed custom API`);
+          });
+        });
+      }
+    }
+
+    function openApiModal() {
+      apiModal.classList.add('active');
+      // Clear form
+      document.getElementById('apiName').value = '';
+      document.getElementById('apiDescription').value = '';
+      document.getElementById('apiUrl').value = '';
+      document.getElementById('apiMethod').value = 'GET';
+      document.getElementById('apiHeaders').value = '';
+      document.getElementById('apiQueryParams').value = '';
+      document.getElementById('apiRequestBody').value = '';
+      document.getElementById('apiResponsePath').value = '';
+      document.getElementById('apiParameters').value = '';
+    }
+
+    function closeApiModal() {
+      apiModal.classList.remove('active');
+    }
+
+    function saveCustomApi() {
+      const name = document.getElementById('apiName').value.trim();
+      const description = document.getElementById('apiDescription').value.trim();
+      const url = document.getElementById('apiUrl').value.trim();
+      const method = document.getElementById('apiMethod').value;
+      const headersText = document.getElementById('apiHeaders').value.trim();
+      const queryParamsText = document.getElementById('apiQueryParams').value.trim();
+      const requestBodyText = document.getElementById('apiRequestBody').value.trim();
+      const responsePath = document.getElementById('apiResponsePath').value.trim();
+      const parametersText = document.getElementById('apiParameters').value.trim();
+
+      // Validation
+      if (!name) {
+        alert('Function name is required');
+        return;
+      }
+      if (!description) {
+        alert('Description is required');
+        return;
+      }
+      if (!url) {
+        alert('API URL is required');
+        return;
+      }
+
+      // Check for duplicate names
+      if (customApis.some(api => api.name === name)) {
+        alert('A custom API with this name already exists');
+        return;
+      }
+
+      try {
+        const apiConfig = {
+          name,
+          description,
+          url,
+          request_method: method,
+        };
+
+        // Parse JSON fields
+        if (headersText) {
+          apiConfig.headers = JSON.parse(headersText);
+        }
+        if (queryParamsText) {
+          apiConfig.query_params = JSON.parse(queryParamsText);
+        }
+        if (requestBodyText) {
+          apiConfig.request_body = JSON.parse(requestBodyText);
+        }
+        if (responsePath) {
+          apiConfig.response_path = responsePath;
+        }
+        if (parametersText) {
+          apiConfig.parameters = JSON.parse(parametersText);
+        }
+
+        customApis.push(apiConfig);
+        renderApiList();
+        closeApiModal();
+        log(`✅ Added custom API: ${name}`);
+      } catch (error) {
+        alert(`Invalid JSON format: ${error.message}`);
+      }
+    }
+
+    // Event Listeners
+    startBtn.addEventListener('click', startCall);
+    stopBtn.addEventListener('click', stopCall);
+    sendBtn.addEventListener('click', sendText);
+    addApiBtn.addEventListener('click', openApiModal);
+    modalClose.addEventListener('click', closeApiModal);
+    saveApiBtn.addEventListener('click', saveCustomApi);
+    
+    messageInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendText();
+      }
+    });
+
+    // Close modal on background click
+    apiModal.addEventListener('click', (event) => {
+      if (event.target === apiModal) {
+        closeApiModal();
+      }
+    });
+
+    window.addEventListener('beforeunload', () => {
+      cleanup();
+    });
+
+    // Initialize
+    renderApiList();
+  </script>
 </body>
 </html>

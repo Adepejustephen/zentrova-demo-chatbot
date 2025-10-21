@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom API Authentication Tester</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .button-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            margin-top: 10px;
+        }
+
+        .button-success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            margin-top: 10px;
+        }
+
+        .response-box {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .response-box.show {
+            display: block;
+        }
+
+        .response-box pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .response-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .success {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+
+        .error {
+            border-color: #dc3545;
+            background: #f8d7da;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        .info-box h4 {
+            color: #2196F3;
+            margin-bottom: 8px;
+        }
+
+        .auth-section {
+            background: #fff3cd;
+            border: 2px dashed #ffc107;
+            padding: 20px;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
+
+        .auth-section h3 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .status-badge.enabled {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.disabled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .example-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+
+        .example-section h4 {
+            color: #495057;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .example-section code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Custom API Authentication Tester</h1>
+            <p>Test time-based token authentication for Custom APIs</p>
+        </div>
+
+        <!-- Info Box -->
+        <div class="card">
+            <div class="info-box">
+                <h4>📚 How to Use This Tester</h4>
+                <ol>
+                    <li>Configure your main API endpoint details</li>
+                    <li>Enable custom authentication and configure the auth endpoint</li>
+                    <li>Click "Create Custom API" to create the configuration</li>
+                    <li>Click "Fetch Chatbot with Custom APIs" to test the authentication flow</li>
+                    <li>The widget will automatically fetch tokens and inject them into headers</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Configuration Form -->
+        <div class="card">
+            <h2>📝 Configure Custom API</h2>
+            
+            <div class="form-group">
+                <label>API Server Base URL</label>
+                <input type="text" id="baseUrl" value="http://localhost:8000" placeholder="http://localhost:8000">
+            </div>
+
+            <div class="grid">
+                <div class="form-group">
+                    <label>Chatbot ID</label>
+                    <input type="text" id="chatbotId" placeholder="Enter your chatbot UUID">
+                </div>
+                <div class="form-group">
+                    <label>Organization ID (for Auth)</label>
+                    <input type="text" id="orgId" placeholder="Enter your organization UUID">
+                </div>
+            </div>
+
+            <h3 style="margin-top: 30px; margin-bottom: 20px; color: #667eea;">Main API Configuration</h3>
+            
+            <div class="form-group">
+                <label>API Name</label>
+                <input type="text" id="apiName" value="Protected API Endpoint" placeholder="My Protected API">
+            </div>
+
+            <div class="form-group">
+                <label>API Description</label>
+                <textarea id="apiDescription" placeholder="Describe what this API does">Test API with custom authentication</textarea>
+            </div>
+
+            <div class="grid">
+                <div class="form-group">
+                    <label>API URL</label>
+                    <input type="text" id="apiUrl" value="https://api.example.com/v1/data" placeholder="https://api.example.com/data">
+                </div>
+                <div class="form-group">
+                    <label>Request Method</label>
+                    <select id="requestMethod">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Timeout (seconds)</label>
+                <input type="number" id="timeout" value="10" min="1" max="60">
+            </div>
+
+            <!-- Custom Authentication Section -->
+            <div class="auth-section">
+                <h3>🔑 Custom Authentication Configuration</h3>
+                
+                <div class="checkbox-group form-group">
+                    <input type="checkbox" id="hasCustomAuth" checked>
+                    <label for="hasCustomAuth">Enable Custom Authentication</label>
+                    <span class="status-badge enabled" id="authStatus">Enabled</span>
+                </div>
+
+                <div id="authConfig">
+                    <div class="form-group">
+                        <label>Authentication URL</label>
+                        <input type="text" id="authUrl" value="https://api.example.com/auth/token" placeholder="https://api.example.com/auth/token">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Auth Method</label>
+                        <select id="authMethod">
+                            <option value="POST" selected>POST</option>
+                            <option value="GET">GET</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Auth Headers (JSON)</label>
+                        <textarea id="authHeaders" placeholder='{"Content-Type": "application/json"}'>{"Content-Type": "application/json"}</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Auth Payload (JSON)</label>
+                        <textarea id="authPayload" placeholder='{"client_id": "xxx", "client_secret": "yyy"}'>{"client_id": "test_client", "client_secret": "test_secret"}</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Auth Response Path (dot notation)</label>
+                        <input type="text" id="authResponsePath" value="access_token" placeholder="access_token or data.token">
+                        <div class="example-section">
+                            <h4>Examples:</h4>
+                            <p>• <code>access_token</code> - for response: {"access_token": "xyz"}</p>
+                            <p>• <code>data.token</code> - for response: {"data": {"token": "xyz"}}</p>
+                            <p>• Leave empty to auto-detect common token fields</p>
+                        </div>
+                    </div>
+
+                    <div class="grid">
+                        <div class="form-group">
+                            <label>Auth Header Key</label>
+                            <input type="text" id="authHeaderKey" value="Authorization" placeholder="Authorization">
+                        </div>
+                        <div class="form-group">
+                            <label>Auth Header Value Prefix</label>
+                            <input type="text" id="authHeaderValuePrefix" value="Bearer" placeholder="Bearer">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="button" onclick="createCustomAPI()">Create Custom API</button>
+            <button class="button button-secondary" onclick="fetchChatbotWithAPIs()">Fetch Chatbot with Custom APIs</button>
+            <button class="button button-success" onclick="testDirectAPICall()">Test Direct API Call (with Auth)</button>
+
+            <div id="responseBox" class="response-box">
+                <h3 id="responseTitle">Response</h3>
+                <pre id="responseContent"></pre>
+            </div>
+        </div>
+
+        <!-- Pre-configured Examples -->
+        <div class="card">
+            <h2>🎯 Quick Examples</h2>
+            <p style="margin-bottom: 20px; color: #666;">Click to load pre-configured authentication scenarios</p>
+            
+            <button class="button" onclick="loadOAuthExample()" style="margin-bottom: 10px;">OAuth 2.0 Client Credentials</button>
+            <button class="button" onclick="loadAPIKeyExample()" style="margin-bottom: 10px;">API Key from Login</button>
+            <button class="button" onclick="loadJWTExample()" style="margin-bottom: 10px;">JWT Authentication</button>
+            <button class="button" onclick="loadCustomHeaderExample()">Custom Header (X-API-Key)</button>
+        </div>
+    </div>
+
+    <script>
+        // Toggle auth configuration visibility
+        document.getElementById('hasCustomAuth').addEventListener('change', function() {
+            const authConfig = document.getElementById('authConfig');
+            const authStatus = document.getElementById('authStatus');
+            if (this.checked) {
+                authConfig.style.display = 'block';
+                authStatus.textContent = 'Enabled';
+                authStatus.className = 'status-badge enabled';
+            } else {
+                authConfig.style.display = 'none';
+                authStatus.textContent = 'Disabled';
+                authStatus.className = 'status-badge disabled';
+            }
+        });
+
+        function showResponse(title, content, isError = false) {
+            const responseBox = document.getElementById('responseBox');
+            const responseTitle = document.getElementById('responseTitle');
+            const responseContent = document.getElementById('responseContent');
+            
+            responseTitle.textContent = title;
+            responseContent.textContent = JSON.stringify(content, null, 2);
+            responseBox.className = 'response-box show ' + (isError ? 'error' : 'success');
+        }
+
+        async function createCustomAPI() {
+            const baseUrl = document.getElementById('baseUrl').value;
+            const chatbotId = document.getElementById('chatbotId').value;
+
+            if (!chatbotId) {
+                alert('Please enter a Chatbot ID');
+                return;
+            }
+
+            const data = {
+                chatbot: chatbotId,
+                name: document.getElementById('apiName').value,
+                description: document.getElementById('apiDescription').value,
+                url: document.getElementById('apiUrl').value,
+                request_method: document.getElementById('requestMethod').value,
+                timeout: parseInt(document.getElementById('timeout').value),
+                headers: {},
+                query_params: {},
+                request_body: null,
+                parameters: {},
+                has_custom_auth: document.getElementById('hasCustomAuth').checked
+            };
+
+            if (data.has_custom_auth) {
+                try {
+                    data.auth_url = document.getElementById('authUrl').value;
+                    data.auth_method = document.getElementById('authMethod').value;
+                    data.auth_headers = JSON.parse(document.getElementById('authHeaders').value);
+                    data.auth_payload = JSON.parse(document.getElementById('authPayload').value);
+                    data.auth_response_path = document.getElementById('authResponsePath').value;
+                    data.auth_header_key = document.getElementById('authHeaderKey').value;
+                    data.auth_header_value_prefix = document.getElementById('authHeaderValuePrefix').value;
+                } catch (e) {
+                    alert('Invalid JSON in auth configuration: ' + e.message);
+                    return;
+                }
+            }
+
+            try {
+                const response = await fetch(`${baseUrl}/api/v1/chatbots/${chatbotId}/custom-apis/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Add your auth token here if needed
+                        // 'Authorization': 'Bearer YOUR_TOKEN'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResponse('✅ Custom API Created Successfully', result, false);
+                } else {
+                    showResponse('❌ Error Creating Custom API', result, true);
+                }
+            } catch (error) {
+                showResponse('❌ Network Error', { error: error.message }, true);
+            }
+        }
+
+        async function fetchChatbotWithAPIs() {
+            const baseUrl = document.getElementById('baseUrl').value;
+            const chatbotId = document.getElementById('chatbotId').value;
+
+            if (!chatbotId) {
+                alert('Please enter a Chatbot ID');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${baseUrl}/api/v1/chatbots/widget/${chatbotId}/`);
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResponse('✅ Chatbot Fetched with Authenticated Headers', result, false);
+                    
+                    // Show custom APIs with their headers
+                    if (result.custom_apis && result.custom_apis.length > 0) {
+                        console.log('Custom APIs with authenticated headers:');
+                        result.custom_apis.forEach(api => {
+                            console.log(`API: ${api.name}`);
+                            console.log('Headers:', api.headers);
+                        });
+                    }
+                } else {
+                    showResponse('❌ Error Fetching Chatbot', result, true);
+                }
+            } catch (error) {
+                showResponse('❌ Network Error', { error: error.message }, true);
+            }
+        }
+
+        async function testDirectAPICall() {
+            const baseUrl = document.getElementById('baseUrl').value;
+            const chatbotId = document.getElementById('chatbotId').value;
+
+            if (!chatbotId) {
+                alert('Please enter a Chatbot ID');
+                return;
+            }
+
+            try {
+                // First fetch the chatbot to get authenticated headers
+                const chatbotResponse = await fetch(`${baseUrl}/api/v1/chatbots/widget/${chatbotId}/`);
+                const chatbot = await chatbotResponse.json();
+                
+                if (!chatbot.custom_apis || chatbot.custom_apis.length === 0) {
+                    alert('No custom APIs configured for this chatbot');
+                    return;
+                }
+
+                const customAPI = chatbot.custom_apis[0];
+                
+                // Now make a request to the actual API using the authenticated headers
+                const apiResponse = await fetch(customAPI.url, {
+                    method: customAPI.request_method,
+                    headers: customAPI.headers
+                });
+
+                const apiResult = await apiResponse.json();
+                
+                showResponse('✅ Direct API Call Result (with Authentication)', {
+                    api_name: customAPI.name,
+                    api_url: customAPI.url,
+                    headers_used: customAPI.headers,
+                    response: apiResult
+                }, !apiResponse.ok);
+            } catch (error) {
+                showResponse('❌ Error Testing API Call', { error: error.message }, true);
+            }
+        }
+
+        // Pre-configured examples
+        function loadOAuthExample() {
+            document.getElementById('apiName').value = 'OAuth Protected API';
+            document.getElementById('apiUrl').value = 'https://api.example.com/v1/users';
+            document.getElementById('hasCustomAuth').checked = true;
+            document.getElementById('hasCustomAuth').dispatchEvent(new Event('change'));
+            document.getElementById('authUrl').value = 'https://oauth.example.com/token';
+            document.getElementById('authMethod').value = 'POST';
+            document.getElementById('authHeaders').value = '{"Content-Type": "application/x-www-form-urlencoded"}';
+            document.getElementById('authPayload').value = '{"grant_type": "client_credentials", "client_id": "your_client_id", "client_secret": "your_client_secret"}';
+            document.getElementById('authResponsePath').value = 'access_token';
+            document.getElementById('authHeaderKey').value = 'Authorization';
+            document.getElementById('authHeaderValuePrefix').value = 'Bearer';
+            alert('OAuth 2.0 example loaded! Update the credentials and test.');
+        }
+
+        function loadAPIKeyExample() {
+            document.getElementById('apiName').value = 'API Key Protected Endpoint';
+            document.getElementById('apiUrl').value = 'https://api.example.com/v1/data';
+            document.getElementById('hasCustomAuth').checked = true;
+            document.getElementById('hasCustomAuth').dispatchEvent(new Event('change'));
+            document.getElementById('authUrl').value = 'https://api.example.com/login';
+            document.getElementById('authMethod').value = 'POST';
+            document.getElementById('authHeaders').value = '{"Content-Type": "application/json"}';
+            document.getElementById('authPayload').value = '{"email": "user@example.com", "password": "password123"}';
+            document.getElementById('authResponsePath').value = 'api_key';
+            document.getElementById('authHeaderKey').value = 'X-API-Key';
+            document.getElementById('authHeaderValuePrefix').value = '';
+            alert('API Key example loaded! Update the credentials and test.');
+        }
+
+        function loadJWTExample() {
+            document.getElementById('apiName').value = 'JWT Protected API';
+            document.getElementById('apiUrl').value = 'https://api.example.com/secure/endpoint';
+            document.getElementById('hasCustomAuth').checked = true;
+            document.getElementById('hasCustomAuth').dispatchEvent(new Event('change'));
+            document.getElementById('authUrl').value = 'https://api.example.com/auth/jwt';
+            document.getElementById('authMethod').value = 'POST';
+            document.getElementById('authHeaders').value = '{"Content-Type": "application/json"}';
+            document.getElementById('authPayload').value = '{"username": "api_user", "api_secret": "secret_key"}';
+            document.getElementById('authResponsePath').value = 'token';
+            document.getElementById('authHeaderKey').value = 'Authorization';
+            document.getElementById('authHeaderValuePrefix').value = 'JWT';
+            alert('JWT example loaded! Update the credentials and test.');
+        }
+
+        function loadCustomHeaderExample() {
+            document.getElementById('apiName').value = 'Custom Header API';
+            document.getElementById('apiUrl').value = 'https://api.example.com/v1/custom';
+            document.getElementById('hasCustomAuth').checked = true;
+            document.getElementById('hasCustomAuth').dispatchEvent(new Event('change'));
+            document.getElementById('authUrl').value = 'https://api.example.com/v1/authenticate';
+            document.getElementById('authMethod').value = 'POST';
+            document.getElementById('authHeaders').value = '{"X-Client-Id": "client123"}';
+            document.getElementById('authPayload').value = '{"client_secret": "secret456"}';
+            document.getElementById('authResponsePath').value = 'data.token';
+            document.getElementById('authHeaderKey').value = 'X-Auth-Token';
+            document.getElementById('authHeaderValuePrefix').value = '';
+            alert('Custom Header example loaded! Update the credentials and test.');
+        }
+    </script>
+</body>
+</html>

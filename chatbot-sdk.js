@@ -69,18 +69,34 @@ async function fetchBotDetails(chatbotID) {
 async function createSDK({ agentId, position, brandColor, brandName } = {}) {
   const chatbotID = agentId; // map SDK param to backend path
 
+  // Clear all localStorage if chatbot ID changed since last load
+  try {
+    const prevId = localStorage.getItem('chatbot_id');
+    if (prevId && chatbotID && prevId !== chatbotID) {
+      localStorage.clear();
+    }
+  } catch (_) {}
+
   importFonts();
   injectStyles();
 
-  // Try to get bot config from backend, fall back to provided props
+  // Try to get bot details by chatbotID
   let bot = null;
-  try { bot = chatbotID ? await fetchBotDetails(chatbotID) : null; } catch (e) { /* leave bot null and continue */ }
+  try { bot = chatbotID ? await fetchBotDetails(chatbotID) : null; } catch (e) { /* continue */ }
 
   const effectiveBrand = (bot && bot.brand_color) || brandColor || '#5b2a86';
   const effectivePosition = (bot && bot.widget_settings && bot.widget_settings.position) || position || 'bottom-right';
   const autoOpen = !!(bot && bot.widget_settings && bot.widget_settings.auto_open);
   const name = (bot && (bot.name || bot.organization_name)) || brandName || DEFAULT_BRAND;
   const welcomeMessage = (bot && bot.welcome_message) || "Hello! How can I help you today?";
+
+  // Persist bot config so call/chat flows can use it
+  try {
+    localStorage.setItem('chatbot_id', chatbotID || '');
+    localStorage.setItem('chatbot_bot_voice', (bot && bot.voice) || 'alloy');
+    localStorage.setItem('chatbot_bot_language', (bot && bot.language) || 'English');
+    localStorage.setItem('chatbot_bot_welcome_message', welcomeMessage);
+  } catch (_) {}
 
   applyBrand(effectiveBrand);
   const { toggle, actions, pill, shell, contentRoot } = createShell();

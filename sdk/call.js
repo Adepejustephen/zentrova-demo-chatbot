@@ -281,7 +281,7 @@ function connectCallWebSocket(wsUrl, configurePayload, attempt = 0) {
 
 export function bindCallViewEvents(router, ctx) {
   const page = router.getPage();
-  const conversationId = getSessionId();
+  const conversationId = localStorage.getItem('chatbot_conversation_id');
 
   if (page === 'call-welcome') {
     const back = document.getElementById('call-welcome-back');
@@ -309,48 +309,52 @@ export function bindCallViewEvents(router, ctx) {
     }
 
     async function initCall() {
-      if (callInitInProgress) return; // guard double-submit
+      if (callInitInProgress) return;
       callInitInProgress = true;
       setPrecallBusy(true);
 
       const name = (document.getElementById('precall-name').value || '').trim();
-      const email = (document.getElementById('precall-email').value || '').trim();
+     
       const code = document.getElementById('precall-country').value || '';
       const phone = (document.getElementById('precall-phone').value || '').trim();
-      const message = localStorage.getItem('chatbot_user_question') || "Start call";
-
-      localStorage.setItem('chatbot_user_name', name);
-      localStorage.setItem('chatbot_user_email', email);
-      localStorage.setItem('chatbot_user_phone', `${code}${phone}`);
-
-      const chatbotID = ctx && ctx.chatbotID;
-      if (!chatbotID) { console.error('Missing chatbotID'); callInitInProgress = false; setPrecallBusy(false); return; }
-
-      const payload = {
-        session_id: getSessionId(),
-        message,
-        user_phone: `${code}${phone}`,
-        user_name: name
-      };
+      const message = localStorage.getItem('chatbot_user_question') || 'Start call';
 
       try {
-        const res = await fetch(`${BASE_URL}/chatbots/widget/${encodeURIComponent(chatbotID)}/call/`, {
+        localStorage.setItem('chatbot_user_name', name);
+        localStorage.setItem('chatbot_user_phone', `${code}${phone}`);
+        localStorage.setItem('chatbot_user_question', message);
+      } catch (_) {}
+
+      const chatbotID = (ctx && ctx.chatbotID) || localStorage.getItem('chatbot_id');
+      if (!chatbotID) { console.error('Missing chatbotID'); callInitInProgress = false; setPrecallBusy(false); return; }
+
+      try {
+        // Align with react.tsx: start call and store call_id
+        const res = await fetch(`${BASE_URL}/chatbots/call/${encodeURIComponent(chatbotID)}/start/`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({
+            user_phone: `${code}${phone}`,
+            user_name: name
+          })
         });
         if (!res.ok) throw new Error('Call init failed');
         const data = await res.json();
-        // Retain precall API for backend tracking; ignore websocket_url in favor of WebRTC
-        await new Promise(r => setTimeout(r, 200));
 
+        // Store conversation id for end/complete
+        try {
+          const convId = data && (data.call_id || data.conversation_id || data.id);
+          if (convId) localStorage.setItem('chatbot_conversation_id', String(convId));
+        } catch (_) {}
+
+        // Prepare config for RTC (prefer localStorage values set by chatbot-sdk)
         const bot = ctx && ctx.bot;
-        const agentId = ctx && ctx.chatbotID; // use chatbotID
-        const language = (bot && bot.language) || 'English';
-        const voice = (bot && bot.voice) || 'alloy';
-        const welcomeMessage = (bot && bot.welcome_message) || 'Hello! How can I assist you today?';
+        const agentId = chatbotID;
+        const language = (bot && bot.language) || localStorage.getItem('chatbot_bot_language') || 'English';
+        const voice = (bot && bot.voice) || localStorage.getItem('chatbot_bot_voice') || 'alloy';
+        const welcomeMessage = (bot && bot.welcome_message) || localStorage.getItem('chatbot_bot_welcome_message') || 'Hello! How can I assist you today?';
 
-        // Start WebRTC session (new-chat.html approach)
+        await new Promise(r => setTimeout(r, 200)); // small delay
         startRTCSession({ agentId, language, voice, welcomeMessage });
 
         router.setPage('call');
@@ -364,12 +368,8 @@ export function bindCallViewEvents(router, ctx) {
       }
     }
 
-    // Keep form submit (for Enter key) and call initializer
     form && form.addEventListener('submit', (e) => { e.preventDefault(); initCall(); });
-
-    // Ensure Start button triggers init directly (no synthetic submit)
     startBtn && startBtn.addEventListener('click', (e) => { e.preventDefault(); initCall(); });
-
     backBtn && backBtn.addEventListener('click', () => router.setPage('call-welcome'));
     return;
   }
@@ -377,19 +377,24 @@ export function bindCallViewEvents(router, ctx) {
   if (page === 'call') {
     const back = document.getElementById('call-back');
     const end = document.getElementById('call-end');
-    const circle = document.getElementById('call-circle');
-
-    back && back.addEventListener('click', () => { callTerminated = true; cleanupCall(); router.setPage('call-welcome'); });
-    end && end.addEventListener('click', () => { callTerminated = true; cleanupCall(); router.setPage('call-welcome'); });
 
     async function endAndClose() {
-      // const conversationId = getSessionId();
       try {
-        await fetch(`${BASE_URL}/chatbots/conversations/${encodeURIComponent(conversationId)}/end/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
-      } catch (_) {  }
+        const convId = localStorage.getItem('chatbot_conversation_id');
+        if (convId) {
+          await fetch(`${BASE_URL}/chatbots/call/${encodeURIComponent(convId)}/complete/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          try { localStorage.removeItem('chatbot_conversation_id'); } catch (_) {}
+        } else {
+          const sid = getSessionId();
+          await fetch(`${BASE_URL}/chatbots/conversations/${encodeURIComponent(sid)}/end/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+      } catch (_) { }
       callTerminated = true;
       cleanupCall();
       router.setPage('call-welcome');
@@ -405,12 +410,29 @@ export function bindCallViewEvents(router, ctx) {
 
 // NEW: WebRTC ephemeral token fetch (same approach as new-chat.html)
 async function fetchEphemeralToken(agentId, language, voice, welcomeMessage) {
-  const url = new URL('https://zentrova-chatbot.mygrantgenie.com/realtime/token', window.location.origin);
-  if (voice) url.searchParams.set('voice', voice);
-  if (agentId) url.searchParams.set('agent_id', agentId);
-  if (language) url.searchParams.set('language', language);
-  if (welcomeMessage) url.searchParams.set('welcome_message', welcomeMessage);
-  const response = await fetch(url.toString());
+  const tokenUrl = 'https://zentrova-chatbot.mygrantgenie.com/realtime/token';
+
+  let customApis = null;
+  try {
+    const raw = localStorage.getItem('chatbot_custom_apis');
+    const parsed = raw ? JSON.parse(raw) : null;
+    customApis = Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+  } catch (_) {
+    customApis = null;
+  }
+
+  const body = {};
+  if (agentId) body.agent_id = agentId;
+  if (voice) body.voice = voice;
+  if (language) body.language = language;
+  if (welcomeMessage) body.welcome_message = welcomeMessage;
+  if (customApis) body.custom_apis = customApis;
+
+  const response = await fetch(tokenUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(`Failed to obtain token: ${errorText}`);
@@ -425,29 +447,28 @@ async function fetchEphemeralToken(agentId, language, voice, welcomeMessage) {
 // NEW: handle function calls over RTC data channel (optional RAG search)
 async function handleFunctionCall(functionName, functionCallId, args) {
   try {
-    const parsedArgs = JSON.parse(args);
-    if (functionName === 'search_knowledge_base') {
-      const response = await fetch('https://zentrova-chatbot.mygrantgenie.com/realtime/function-call', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ function_name: functionName, arguments: parsedArgs })
-      });
-      if (!response.ok) throw new Error(`Function call failed: ${response.statusText}`);
-      const result = await response.json();
-      if (dataChannel && dataChannel.readyState === 'open') {
-        const outputEvent = {
-          type: 'conversation.item.create',
-          item: { type: 'function_call_output', call_id: functionCallId, output: JSON.stringify(result) }
-        };
-        dataChannel.send(JSON.stringify(outputEvent));
-        dataChannel.send(JSON.stringify({ type: 'response.create' }));
-      }
+    const parsedArgs = JSON.parse(args || '{}');
+    const response = await fetch('https://zentrova-chatbot.mygrantgenie.com/realtime/function-call', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ function_name: functionName, arguments: parsedArgs })
+    });
+    if (!response.ok) throw new Error(`Function call failed: ${response.statusText}`);
+    const result = await response.json();
+
+    if (dataChannel && dataChannel.readyState === 'open') {
+      const outputEvent = {
+        type: 'conversation.item.create',
+        item: { type: 'function_call_output', call_id: functionCallId, output: JSON.stringify(result) }
+      };
+      dataChannel.send(JSON.stringify(outputEvent));
+      dataChannel.send(JSON.stringify({ type: 'response.create' }));
     }
   } catch (error) {
     if (dataChannel && dataChannel.readyState === 'open') {
       const outputEvent = {
         type: 'conversation.item.create',
-        item: { type: 'function_call_output', call_id: functionCallId, output: JSON.stringify({ error: error.message }) }
+        item: { type: 'function_call_output', call_id: functionCallId, output: JSON.stringify({ error: error?.message || 'Function call error' }) }
       };
       dataChannel.send(JSON.stringify(outputEvent));
     }
@@ -458,26 +479,32 @@ async function handleFunctionCall(functionName, functionCallId, args) {
 async function startRTCSession({ agentId, language, voice, welcomeMessage }) {
   try {
     dispatchCallStatus('connecting');
-    const ephemeralKey = await fetchEphemeralToken(agentId, language, voice, welcomeMessage);
+
+    // NEW: fallback to stored config (set by chatbot-sdk on load)
+    const storedAgentId = localStorage.getItem('chatbot_id') || agentId;
+    const storedVoice = localStorage.getItem('chatbot_bot_voice') || voice;
+    const storedLanguage = localStorage.getItem('chatbot_bot_language') || language;
+    const storedWelcome = localStorage.getItem('chatbot_bot_welcome_message') || welcomeMessage;
+
+    const ephemeralKey = await fetchEphemeralToken(storedAgentId, storedLanguage, storedVoice, storedWelcome);
 
     pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
 
     pc.ontrack = (event) => {
       const assistantAudio = document.getElementById('assistantAudio');
-     
       if (assistantAudio) {
         assistantAudio.srcObject = event.streams[0];
         assistantAudio.play().catch(() => {});
       }
-    
       startPlaybackMonitor(event.streams[0]);
     };
 
     pc.oniceconnectionstatechange = () => {
-      if (pc.iceConnectionState === 'connected') dispatchCallStatus('connected');
-      if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
+      if (pc.iceConnectionState === 'connected') {
+        dispatchCallStatus('connected');
+      } else if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
         dispatchCallStatus('error', { error: 'Connection lost' });
-       
+        cleanupCall();
       }
     };
 
@@ -490,7 +517,6 @@ async function startRTCSession({ agentId, language, voice, welcomeMessage }) {
     dataChannel = pc.createDataChannel('oai-events');
     dataChannel.onopen = () => {
       dispatchCallStatus('configured');
-      // Trigger initial response (uses welcome_message configured server-side)
       dataChannel.send(JSON.stringify({ type: 'response.create' }));
     };
 
@@ -519,7 +545,6 @@ async function startRTCSession({ agentId, language, voice, welcomeMessage }) {
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
 
-    // Send SDP to OpenAI
     const sdpResponse = await fetch('https://api.openai.com/v1/realtime/calls', {
       method: 'POST',
       headers: { Authorization: `Bearer ${ephemeralKey}`, 'Content-Type': 'application/sdp' },
