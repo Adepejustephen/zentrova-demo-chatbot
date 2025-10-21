@@ -6,10 +6,18 @@
     <title>Zentrova Chatbot</title>
   </head>
   <body>
-    <script type="module">
+     <script src="https://zentrova-demo-chatbot.vercel.app/chatbot-sdk.js" crossorigin="anonymous"></script>
+    <!-- <script type="module">
       import './chatbot-sdk.js';
       ChatbotSDK.init({ agentId: "13a5a825-0518-4076-b65a-424082763b68", position: 'bottom-right', });
+    </script> -->
+<script>
+      // ... existing code ...
+      ChatbotSDK.init({
+        agentId: "13a5a825-0518-4076-b65a-424082763b68",
+        position: "bottom-right",
+      });
+      // ... existing code ...
     </script>
-
   </body>
 </html>
