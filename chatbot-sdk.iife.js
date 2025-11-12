@@ -2,21 +2,7 @@ var ChatbotSDK = (() => {
   var __defProp = Object.defineProperty;
   var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
   var __getOwnPropNames = Object.getOwnPropertyNames;
-  var __getOwnPropSymbols = Object.getOwnPropertySymbols;
   var __hasOwnProp = Object.prototype.hasOwnProperty;
-  var __propIsEnum = Object.prototype.propertyIsEnumerable;
-  var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-  var __spreadValues = (a, b) => {
-    for (var prop in b || (b = {}))
-      if (__hasOwnProp.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    if (__getOwnPropSymbols)
-      for (var prop of __getOwnPropSymbols(b)) {
-        if (__propIsEnum.call(b, prop))
-          __defNormalProp(a, prop, b[prop]);
-      }
-    return a;
-  };
   var __export = (target, all) => {
     for (var name in all)
       __defProp(target, name, { get: all[name], enumerable: true });
@@ -270,7 +256,7 @@ var ChatbotSDK = (() => {
       <div class="chat-panel">
         <div class="chat-header">
           <button id="chat-back-btn" class="icon-btn" aria-label="Back">\u2039</button>
-          Kuda Bot
+          ${name}
         </div>
         <div class="chat-panel-body"><ul class="chatbox"></ul></div>
         <div class="chat-input">
@@ -289,6 +275,9 @@ var ChatbotSDK = (() => {
         <div class="call-card" style="border-radius:0">
           <p style="text-align:center; color: var(--muted); margin: 0 0 6px;">Talking to</p>
           <h2 style="text-align:center; font-size: 24px; font-weight: 800; margin: 0 0 8px;">${name} Agent</h2>
+          <div id="call-connecting" style="text-align:center; font-size: 0.9rem; color: var(--muted); margin-bottom: 8px; display:none;">
+            Connecting...
+          </div>
           <div class="call-circle idle" id="call-circle">
             <audio id="assistantAudio" autoplay></audio>
            
@@ -345,12 +334,28 @@ var ChatbotSDK = (() => {
           <button id="footer-call" class="footer-action active"><i class="bi bi-telephone-outbound"></i><span>Call</span></button>
         </div>
       </div>
+    `,
+      "postcall-transfer": () => `
+      <div class="welcome-screen" style="padding: var(--s-2); ">
+        <div class="call-card" style="border-radius: 12px; text-align:center; padding: 24px; display: flex; flex-direction: column; align-items: center;">
+          <div style="width:72px; height:72px; border-radius:50%; background:#000; display:inline-flex; align-items:center; justify-content:center; margin-bottom:16px; box-shadow:0 4px 16px rgba(0,0,0,0.2);">
+            <i class="bi bi-telephone" style="color:#fff; font-size:28px;"></i>
+          </div>
+          <h3 style="margin: 0 0 4px;">Not satisfied?</h3>
+          <p style="color: var(--muted); margin: 0 0 16px;">Speak to us directly.</p>
+          <div style="display:flex; justify-content:center; gap: 12px;">
+            <button id="transfer-call-now" class="call-primary" style="min-width:120px; border-radius:24px;">Call Now</button>
+            <button id="transfer-close" class="btn-secondary" style="min-width:120px;border-radius:24px; border:1px solid #000; background:#fff; color:#000;">Close</button>
+          </div>
+        </div>
+      </div>
     `
     };
   }
 
   // sdk/call.js
   var BASE_URL = "https://zentrova-ai.mygrantgenie.com/api/v1";
+  var CHATBOT_BASE_URL = "https://zentrova-chatbot.mygrantgenie.com/";
   var callWS = null;
   var callAudioContext = null;
   var callAudioSource = null;
@@ -367,6 +372,13 @@ var ChatbotSDK = (() => {
   var playbackAnalyser = null;
   var playbackSourceNode = null;
   var playbackMonitorRAF = null;
+  var inactivityInterval = null;
+  var lastActivityAt = Date.now();
+  var endAndCloseRef = null;
+  var idleCheckerStarted = false;
+  function bumpActivity() {
+    lastActivityAt = Date.now();
+  }
   function cleanupCall() {
     try {
       callTerminated = true;
@@ -453,6 +465,11 @@ var ChatbotSDK = (() => {
           }
           playbackAudioContext = null;
         }
+        if (inactivityInterval != null) {
+          clearInterval(inactivityInterval);
+          inactivityInterval = null;
+        }
+        idleCheckerStarted = false;
       } catch (_) {
       }
       micActive = false;
@@ -473,7 +490,7 @@ var ChatbotSDK = (() => {
   }
   function dispatchCallStatus(status, extra = {}) {
     try {
-      window.dispatchEvent(new CustomEvent("chatbot-call-status", { detail: __spreadValues({ status }, extra) }));
+      window.dispatchEvent(new CustomEvent("chatbot-call-status", { detail: { status, ...extra } }));
     } catch (_) {
     }
   }
@@ -482,7 +499,6 @@ var ChatbotSDK = (() => {
   var nextPlayTime = 0;
   function bindCallViewEvents(router, ctx) {
     const page = router.getPage();
-    const conversationId = localStorage.getItem("chatbot_conversation_id");
     if (page === "call-welcome") {
       const back = document.getElementById("call-welcome-back");
       const start = document.getElementById("call-welcome-start");
@@ -530,10 +546,7 @@ var ChatbotSDK = (() => {
           const res = await fetch(`${BASE_URL}/chatbots/call/${encodeURIComponent(chatbotID)}/start/`, {
             method: "POST",
             headers: { "Content-Type": "application/json", "Accept": "application/json" },
-            body: JSON.stringify({
-              user_phone: `${code}${phone}`,
-              user_name: name
-            })
+            body: JSON.stringify({ user_phone: `${code}${phone}`, user_name: name })
           });
           if (!res.ok) throw new Error("Call init failed");
           const data = await res.json();
@@ -552,7 +565,7 @@ var ChatbotSDK = (() => {
           router.setPage("call");
         } catch (err) {
           console.error("Init call error:", err);
-          dispatchCallStatus("error", { error: (err == null ? void 0 : err.message) || "Initialization failed" });
+          dispatchCallStatus("error", { error: err?.message || "Initialization failed" });
           alert("Unable to start call. Please try again.");
         } finally {
           callInitInProgress = false;
@@ -571,8 +584,22 @@ var ChatbotSDK = (() => {
       return;
     }
     if (page === "call") {
+      let callStatusHandler = function(ev) {
+        const detail = ev.detail || {};
+        const status = detail.status;
+        const el = document.getElementById("call-connecting");
+        if (!el) return;
+        if (status === "connected" || status === "configured") {
+          el.style.display = "none";
+        } else if (status === "connecting") {
+          el.style.display = "block";
+        }
+      };
       const back = document.getElementById("call-back");
       const end = document.getElementById("call-end");
+      const connectingEl = document.getElementById("call-connecting");
+      if (connectingEl) connectingEl.style.display = "block";
+      window.addEventListener("chatbot-call-status", callStatusHandler);
       async function endAndClose() {
         try {
           const convId = localStorage.getItem("chatbot_conversation_id");
@@ -596,8 +623,19 @@ var ChatbotSDK = (() => {
         }
         callTerminated = true;
         cleanupCall();
-        router.setPage("call-welcome");
+        let transferNumber = null;
+        try {
+          transferNumber = localStorage.getItem("chatbot_transfer_phone_number");
+        } catch (_) {
+        }
+        if (transferNumber) {
+          router.setPage("postcall-transfer");
+          console.log();
+        } else {
+          router.setPage("call-welcome");
+        }
       }
+      endAndCloseRef = endAndClose;
       back && back.addEventListener("click", (e) => {
         e.preventDefault();
         endAndClose();
@@ -608,9 +646,47 @@ var ChatbotSDK = (() => {
       });
       return;
     }
+    if (page === "postcall-transfer") {
+      const callBtn = document.getElementById("transfer-call-now");
+      const closeBtn = document.getElementById("transfer-close");
+      let transferNumber = null;
+      try {
+        transferNumber = localStorage.getItem("chatbot_transfer_phone_number");
+      } catch (_) {
+      }
+      callBtn && callBtn.addEventListener("click", () => {
+        if (transferNumber) {
+          try {
+            window.location.href = `tel:${transferNumber}`;
+          } catch (_) {
+          }
+        }
+        try {
+          localStorage.removeItem("chatbot_transfer_phone_number");
+        } catch (_) {
+        }
+        try {
+          document.body.classList.remove("show-chatbot");
+        } catch (_) {
+        }
+        router.setPage("call-welcome");
+      });
+      closeBtn && closeBtn.addEventListener("click", () => {
+        try {
+          localStorage.removeItem("chatbot_transfer_phone_number");
+        } catch (_) {
+        }
+        try {
+          document.body.classList.remove("show-chatbot");
+        } catch (_) {
+        }
+        router.setPage("call-welcome");
+      });
+      return;
+    }
   }
   async function fetchEphemeralToken(agentId, language, voice, welcomeMessage) {
-    const tokenUrl = "https://zentrova-chatbot.mygrantgenie.com/realtime/token";
+    const tokenUrl = `${CHATBOT_BASE_URL}realtime/token`;
     let customApis = null;
     try {
       const raw = localStorage.getItem("chatbot_custom_apis");
@@ -643,7 +719,14 @@ var ChatbotSDK = (() => {
   async function handleFunctionCall(functionName, functionCallId, args) {
     try {
       const parsedArgs = JSON.parse(args || "{}");
-      const response = await fetch("https://zentrova-chatbot.mygrantgenie.com/realtime/function-call", {
+      if (parsedArgs && parsedArgs.transfer_phone_number) {
+        const num = String(parsedArgs.transfer_phone_number);
+        try {
+          localStorage.setItem("chatbot_transfer_phone_number", num);
+        } catch (_) {
+        }
+      }
+      const response = await fetch(`${CHATBOT_BASE_URL}realtime/function-call`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ function_name: functionName, arguments: parsedArgs })
@@ -662,7 +745,7 @@ var ChatbotSDK = (() => {
       if (dataChannel && dataChannel.readyState === "open") {
         const outputEvent = {
           type: "conversation.item.create",
-          item: { type: "function_call_output", call_id: functionCallId, output: JSON.stringify({ error: (error == null ? void 0 : error.message) || "Function call error" }) }
+          item: { type: "function_call_output", call_id: functionCallId, output: JSON.stringify({ error: error?.message || "Function call error" }) }
         };
         dataChannel.send(JSON.stringify(outputEvent));
       }
@@ -670,113 +753,104 @@ var ChatbotSDK = (() => {
   }
   async function startRTCSession({ agentId, language, voice, welcomeMessage }) {
     try {
+      let startIdleCheckerOnce = function() {
+        if (idleCheckerStarted) return;
+        idleCheckerStarted = true;
+        lastActivityAt = Date.now();
+        if (inactivityInterval) clearInterval(inactivityInterval);
+        inactivityInterval = setInterval(() => {
+          if (callTerminated) return;
+          const idleForMs = Date.now() - lastActivityAt;
+          if (idleForMs >= 1e4) {
+            if (endAndCloseRef) endAndCloseRef();
+          }
+        }, 1e3);
+      };
       dispatchCallStatus("connecting");
+      const connectingEl = document.getElementById("call-connecting");
+      if (connectingEl) connectingEl.style.display = "block";
       const storedAgentId = localStorage.getItem("chatbot_id") || agentId;
       const storedVoice = localStorage.getItem("chatbot_bot_voice") || voice;
       const storedLanguage = localStorage.getItem("chatbot_bot_language") || language;
       const storedWelcome = localStorage.getItem("chatbot_bot_welcome_message") || welcomeMessage;
       const ephemeralKey = await fetchEphemeralToken(storedAgentId, storedLanguage, storedVoice, storedWelcome);
-      pc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
-      pc.ontrack = (event) => {
+      pc = new RTCPeerConnection({ iceServers: [{ urls: ["stun:stun.l.google.com:19302"] }] });
+      pc.addEventListener("iceconnectionstatechange", () => {
+        const st = pc.iceConnectionState;
+        if (st === "disconnected" || st === "failed") {
+          if (endAndCloseRef) endAndCloseRef();
+        }
+      });
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      localStream.getTracks().forEach((t) => pc.addTrack(t, localStream));
+      pc.addEventListener("track", (ev) => {
+        const [stream] = ev.streams;
         const assistantAudio = document.getElementById("assistantAudio");
         if (assistantAudio) {
-          assistantAudio.srcObject = event.streams[0];
-          assistantAudio.play().catch(() => {
-          });
+          assistantAudio.srcObject = stream;
         }
-        startPlaybackMonitor(event.streams[0]);
-      };
-      pc.oniceconnectionstatechange = () => {
-        if (pc.iceConnectionState === "connected") {
-          dispatchCallStatus("connected");
-        } else if (pc.iceConnectionState === "disconnected" || pc.iceConnectionState === "failed") {
-          dispatchCallStatus("error", { error: "Connection lost" });
-          cleanupCall();
+        const audioTrack = stream && stream.getAudioTracks && stream.getAudioTracks()[0];
+        if (audioTrack) {
+          audioTrack.onunmute = () => {
+            bumpActivity();
+            startIdleCheckerOnce();
+            const el = document.getElementById("call-connecting");
+            if (el) el.style.display = "none";
+            dispatchCallStatus("streaming");
+          };
         }
-      };
-      localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
-      dispatchCallStatus("mic_granted");
+      });
       dataChannel = pc.createDataChannel("oai-events");
       dataChannel.onopen = () => {
-        dispatchCallStatus("configured");
-        dataChannel.send(JSON.stringify({ type: "response.create" }));
-      };
-      dataChannel.onmessage = (event) => {
+        bumpActivity();
         try {
-          const payload = JSON.parse(event.data);
-          const circle = document.getElementById("call-circle");
-          if (payload.type === "response.audio.delta") {
-            circle && circle.classList.add("responding");
-          } else if (payload.type === "response.audio.done") {
-            circle && circle.classList.remove("responding");
-          } else if (payload.type === "response.function_call_arguments.done") {
-            handleFunctionCall(payload.name, payload.call_id, payload.arguments);
-          } else if (payload.type === "response.done") {
-            dispatchCallStatus("connected");
-          }
+          dataChannel.send(JSON.stringify({ type: "response.create" }));
         } catch (_) {
         }
       };
-      dataChannel.onerror = (error) => {
-        dispatchCallStatus("error", { error: "Data channel error" });
+      dataChannel.onmessage = (ev) => {
+        bumpActivity();
+        startIdleCheckerOnce();
+        try {
+          const msg = JSON.parse(ev.data);
+          if (msg.type === "response.function_call") {
+            const { name, call_id, arguments: args } = msg;
+            handleFunctionCall(name, call_id, args);
+          }
+        } catch (_) {
+        }
       };
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-      const sdpResponse = await fetch("https://api.openai.com/v1/realtime/calls", {
+      const modelUrl = "https://api.openai.com/v1/realtime/calls";
+      const sdpRes = await fetch(modelUrl, {
         method: "POST",
-        headers: { Authorization: `Bearer ${ephemeralKey}`, "Content-Type": "application/sdp" },
-        body: offer.sdp
+        headers: {
+          Authorization: `Bearer ${ephemeralKey}`,
+          "Content-Type": "application/sdp"
+        },
+        body: pc.localDescription?.sdp || ""
       });
-      if (!sdpResponse.ok) {
-        const errText = await sdpResponse.text();
-        throw new Error(`OpenAI SDP error ${sdpResponse.status}: ${errText}`);
+      if (!sdpRes.ok) throw new Error("SDP exchange failed");
+      const answerSdp = await sdpRes.text();
+      const remoteDesc = new RTCSessionDescription({ type: "answer", sdp: answerSdp });
+      await pc.setRemoteDescription(remoteDesc);
+      if (inactivityInterval) {
+        clearInterval(inactivityInterval);
       }
-      const answer = await sdpResponse.text();
-      await pc.setRemoteDescription({ type: "answer", sdp: answer });
-    } catch (error) {
-      dispatchCallStatus("error", { error: error.message });
+      lastActivityAt = Date.now();
+      inactivityInterval = setInterval(() => {
+        if (callTerminated) return;
+        const idleForMs = Date.now() - lastActivityAt;
+        if (idleForMs >= 1e4) {
+          if (endAndCloseRef) endAndCloseRef();
+        }
+      }, 1e3);
+      dispatchCallStatus("connected");
+    } catch (err) {
+      console.error("LiveCall start error:", err);
+      dispatchCallStatus("error", { error: err?.message || "RTC start failed" });
       cleanupCall();
-    }
-  }
-  function startPlaybackMonitor(stream) {
-    const circle = document.getElementById("call-circle");
-    if (!circle || !stream) return;
-    try {
-      let tick = function() {
-        try {
-          playbackAnalyser.getByteTimeDomainData(data);
-          let sum = 0;
-          for (let i = 0; i < data.length; i++) {
-            const v = (data[i] - 128) / 128;
-            sum += v * v;
-          }
-          const rms = Math.sqrt(sum / data.length);
-          if (rms > 0.02) circle.classList.add("responding");
-          else circle.classList.remove("responding");
-        } catch (_) {
-        }
-        playbackMonitorRAF = requestAnimationFrame(tick);
-      };
-      if (playbackMonitorRAF) {
-        cancelAnimationFrame(playbackMonitorRAF);
-        playbackMonitorRAF = null;
-      }
-      if (playbackAudioContext) {
-        try {
-          playbackAudioContext.close();
-        } catch (_) {
-        }
-        playbackAudioContext = null;
-      }
-      playbackAudioContext = new (window.AudioContext || window.webkitAudioContext)();
-      playbackSourceNode = playbackAudioContext.createMediaStreamSource(stream);
-      playbackAnalyser = playbackAudioContext.createAnalyser();
-      playbackAnalyser.fftSize = 2048;
-      playbackSourceNode.connect(playbackAnalyser);
-      const data = new Uint8Array(playbackAnalyser.frequencyBinCount);
-      tick();
-    } catch (_) {
     }
   }
 
@@ -986,7 +1060,7 @@ var ChatbotSDK = (() => {
       const footerChat = document.getElementById("footer-chat");
       const footerCall = document.getElementById("footer-call");
       footerChat && footerChat.addEventListener("click", () => router.setPage("prechat"));
-      footerCall && footerCall.addEventListener("click", () => router.setPage("call"));
+      footerCall && footerCall.addEventListener("click", () => router.setPage("precall"));
       footerChat && footerChat.classList.add("active");
       footerCall && footerCall.classList.remove("active");
     } else if (page === "chat") {
@@ -1019,7 +1093,6 @@ var ChatbotSDK = (() => {
       const send = document.getElementById("send-btn");
       const attach = document.getElementById("attach-btn");
       async function sendToBot(userText) {
-        var _a;
         addMessage(userText, "outgoing");
         persistMessage(userText, "outgoing");
         const last = document.querySelector(".chatbox li:last-child");
@@ -1048,7 +1121,7 @@ var ChatbotSDK = (() => {
           const data = ok ? await res.json() : null;
           stopTyping();
           if (!ok) throw new Error("Request failed");
-          const botReply = data && data.bot_message && data.bot_message.message || ((_a = data == null ? void 0 : data.data) == null ? void 0 : _a.response) || (data == null ? void 0 : data.response) || (data == null ? void 0 : data.message) || "Okay.";
+          const botReply = data && data.bot_message && data.bot_message.message || data?.data?.response || data?.response || data?.message || "Okay.";
           addMessage(botReply, "incoming");
           persistMessage(botReply, "incoming");
         } catch (err) {
@@ -1079,7 +1152,7 @@ var ChatbotSDK = (() => {
       });
       const back = document.getElementById("chat-back-btn");
       back && back.addEventListener("click", () => router.setPage("prechat"));
-    } else if (page === "call-welcome" || page === "precall" || page === "call") {
+    } else if (page === "call-welcome" || page === "precall" || page === "call" || page === "postcall-transfer") {
       return bindCallViewEvents(router, ctx);
     } else if (page === "prechat") {
       const form = document.getElementById("prechat-form");
@@ -1105,7 +1178,7 @@ var ChatbotSDK = (() => {
       const footerChat = document.getElementById("footer-chat");
       const footerCall = document.getElementById("footer-call");
       footerChat && footerChat.addEventListener("click", () => router.setPage("prechat"));
-      footerCall && footerCall.addEventListener("click", () => router.setPage("call"));
+      footerCall && footerCall.addEventListener("click", () => router.setPage("precall"));
       footerChat && footerChat.classList.add("active");
       footerCall && footerCall.classList.remove("active");
     } else if (page === "chat") {
@@ -1138,7 +1211,6 @@ var ChatbotSDK = (() => {
       const send = document.getElementById("send-btn");
       const attach = document.getElementById("attach-btn");
       async function sendToBot(userText) {
-        var _a;
         addMessage(userText, "outgoing");
         persistMessage(userText, "outgoing");
         const last = document.querySelector(".chatbox li:last-child");
@@ -1167,7 +1239,7 @@ var ChatbotSDK = (() => {
           const data = ok ? await res.json() : null;
           stopTyping();
           if (!ok) throw new Error("Request failed");
-          const botReply = data && data.bot_message && data.bot_message.message || ((_a = data == null ? void 0 : data.data) == null ? void 0 : _a.response) || (data == null ? void 0 : data.response) || (data == null ? void 0 : data.message) || "Okay.";
+          const botReply = data && data.bot_message && data.bot_message.message || data?.data?.response || data?.response || data?.message || "Okay.";
           addMessage(botReply, "incoming");
           persistMessage(botReply, "incoming");
         } catch (err) {
@@ -1214,8 +1286,7 @@ var ChatbotSDK = (() => {
   window.addEventListener("chatbot-call-status", (ev) => {
   });
   window.addEventListener("chatbot-call-status", (ev) => {
-    var _a;
-    const status = ((_a = ev == null ? void 0 : ev.detail) == null ? void 0 : _a.status) || "";
+    const status = ev?.detail?.status || "";
     const endBtn = document.getElementById("call-end");
     const isConnecting = status === "connecting";
     if (endBtn) {
@@ -1299,6 +1370,7 @@ var ChatbotSDK = (() => {
       localStorage.setItem("chatbot_bot_voice", bot && bot.voice || "alloy");
       localStorage.setItem("chatbot_bot_language", bot && bot.language || "English");
       localStorage.setItem("chatbot_bot_welcome_message", welcomeMessage);
+      localStorage.setItem("chatbot_transfer_phone_number", bot && bot?.transfer_phone_number || "");
     } catch (_) {
     }
     applyBrand(effectiveBrand);

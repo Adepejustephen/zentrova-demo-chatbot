@@ -1,6 +1,7 @@
 // Call module: handle call-welcome, precall, and live call lifecycle
 // Module globals
 const BASE_URL = 'https://zentrova-ai.mygrantgenie.com/api/v1';
+const CHATBOT_BASE_URL = 'https://zentrova-chatbot.mygrantgenie.com/';
 let callWS = null;
 let callAudioContext = null;
 let callAudioSource = null;
@@ -18,6 +19,14 @@ let playbackAudioContext = null;
 let playbackAnalyser = null;
 let playbackSourceNode = null;
 let playbackMonitorRAF = null;
+// NEW: inactivity tracking + global end handler
+let inactivityInterval = null;
+let lastActivityAt = Date.now();
+let endAndCloseRef = null;
+// NEW: start idle checker only after call actually starts
+let idleCheckerStarted = false;
+function bumpActivity() { lastActivityAt = Date.now(); }
+
 // cleanupCall()
 // cleanupCall(): stop touching wave indicator since it was removed
 function cleanupCall() {
@@ -56,6 +65,9 @@ function cleanupCall() {
       try { if (playbackSourceNode) playbackSourceNode.disconnect(); } catch(_) {}
       playbackSourceNode = null;
       if (playbackAudioContext) { try { playbackAudioContext.close(); } catch(_) {} playbackAudioContext = null; }
+      // NEW: clear inactivity checker
+      if (inactivityInterval != null) { clearInterval(inactivityInterval); inactivityInterval = null; }
+      idleCheckerStarted = false;
     } catch (_) {}
     micActive = false;
     callInitInProgress = false; // guard reset
@@ -66,7 +78,8 @@ function getSessionId() {
   let sid = localStorage.getItem('chatbot_session_id');
   if (!sid) {
     sid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-      const r = (Math.random() * 16) | 0, v = c === 'x' ? r : (r & 0x3) | 0x8; return v.toString(16);
+      const r = (Math.random() * 16) | 0, v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
     });
     localStorage.setItem('chatbot_session_id', sid);
   }
@@ -99,7 +112,7 @@ function extractWSProtocols(configurePayload) {
   return undefined;
 }
 
-// startAudioCapture + helpers
+// startAudioCapture + helpers (legacy WS path)
 function startAudioCapture() {
   return navigator.mediaDevices.getUserMedia({
     audio: {
@@ -109,7 +122,7 @@ function startAudioCapture() {
       noiseSuppression: true,
       autoGainControl: true
     }
-  }).then(stream => {
+  }).then((stream) => {
     callAudioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
     callAudioSource = callAudioContext.createMediaStreamSource(stream);
     callAudioProcessor = callAudioContext.createScriptProcessor(4096, 1, 1);
@@ -146,7 +159,11 @@ function stopAudioCapture() {
     if (callAudioProcessor) { callAudioProcessor.disconnect(); callAudioProcessor = null; }
     if (callAudioSource) {
       callAudioSource.disconnect();
-      if (callAudioSource.mediaStream) callAudioSource.mediaStream.getTracks().forEach(t => t.stop());
+      try {
+        if (callAudioSource.mediaStream) {
+          callAudioSource.mediaStream.getTracks().forEach((t) => t.stop());
+        }
+      } catch (_) {}
       callAudioSource = null;
     }
     if (callEndInterval) { clearInterval(callEndInterval); callEndInterval = null; }
@@ -156,10 +173,10 @@ function stopAudioCapture() {
 }
 
 function resumeAudioCapture() {
-  startAudioCapture().catch(err => dispatchCallStatus('mic_error', { error: err?.message || 'Microphone error' }));
+  startAudioCapture().catch((err) => dispatchCallStatus('mic_error', { error: err?.message || 'Microphone error' }));
 }
 
-// NEW: playback queue for AI audio
+// NEW: playback queue for WS AI audio
 let audioQueue = [];
 let isPlayingAudio = false;
 let nextPlayTime = 0;
@@ -195,7 +212,7 @@ function playNextInQueue() {
   const buffer = audioQueue.shift();
   try {
     const source = callAudioContext.createBufferSource();
-    currentPlaybackSource = source; // NEW: track to stop on cleanup
+    currentPlaybackSource = source; // track to stop on cleanup
     source.buffer = buffer;
     source.connect(callAudioContext.destination);
     const currentTime = callAudioContext.currentTime;
@@ -216,7 +233,7 @@ function connectCallWebSocket(wsUrl, configurePayload, attempt = 0) {
   let opened = false;
 
   cleanupCall();
-  callTerminated = false; // NEW: allow new session
+  callTerminated = false; // allow new session
   try {
     const normalized = normalizeWSUrl(wsUrl);
     const protocols = extractWSProtocols(configurePayload);
@@ -237,7 +254,7 @@ function connectCallWebSocket(wsUrl, configurePayload, attempt = 0) {
   };
 
   callWS.onmessage = async (event) => {
-    if (callTerminated) return; // NEW: ignore after end
+    if (callTerminated) return;
     const msg = JSON.parse(event.data);
     const type = msg.type;
     if (type === 'configured') {
@@ -279,9 +296,9 @@ function connectCallWebSocket(wsUrl, configurePayload, attempt = 0) {
   };
 }
 
+// Bindings for call pages
 export function bindCallViewEvents(router, ctx) {
   const page = router.getPage();
-  const conversationId = localStorage.getItem('chatbot_conversation_id');
 
   if (page === 'call-welcome') {
     const back = document.getElementById('call-welcome-back');
@@ -314,7 +331,6 @@ export function bindCallViewEvents(router, ctx) {
       setPrecallBusy(true);
 
       const name = (document.getElementById('precall-name').value || '').trim();
-     
       const code = document.getElementById('precall-country').value || '';
       const phone = (document.getElementById('precall-phone').value || '').trim();
       const message = localStorage.getItem('chatbot_user_question') || 'Start call';
@@ -329,14 +345,11 @@ export function bindCallViewEvents(router, ctx) {
       if (!chatbotID) { console.error('Missing chatbotID'); callInitInProgress = false; setPrecallBusy(false); return; }
 
       try {
-        // Align with react.tsx: start call and store call_id
+        // Start call and store call_id
         const res = await fetch(`${BASE_URL}/chatbots/call/${encodeURIComponent(chatbotID)}/start/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify({
-            user_phone: `${code}${phone}`,
-            user_name: name
-          })
+          body: JSON.stringify({ user_phone: `${code}${phone}`, user_name: name })
         });
         if (!res.ok) throw new Error('Call init failed');
         const data = await res.json();
@@ -354,7 +367,7 @@ export function bindCallViewEvents(router, ctx) {
         const voice = (bot && bot.voice) || localStorage.getItem('chatbot_bot_voice') || 'alloy';
         const welcomeMessage = (bot && bot.welcome_message) || localStorage.getItem('chatbot_bot_welcome_message') || 'Hello! How can I assist you today?';
 
-        await new Promise(r => setTimeout(r, 200)); // small delay
+        await new Promise((r) => setTimeout(r, 200)); // small delay
         startRTCSession({ agentId, language, voice, welcomeMessage });
 
         router.setPage('call');
@@ -378,6 +391,24 @@ export function bindCallViewEvents(router, ctx) {
     const back = document.getElementById('call-back');
     const end = document.getElementById('call-end');
 
+    // show connecting loader by default when entering call page
+    const connectingEl = document.getElementById('call-connecting');
+    if (connectingEl) connectingEl.style.display = 'block';
+
+    // listen for call status to toggle loader
+    function callStatusHandler(ev) {
+      const detail = ev.detail || {};
+      const status = detail.status;
+      const el = document.getElementById('call-connecting');
+      if (!el) return;
+      if (status === 'connected' || status === 'configured') {
+        el.style.display = 'none';
+      } else if (status === 'connecting') {
+        el.style.display = 'block';
+      }
+    }
+    window.addEventListener('chatbot-call-status', callStatusHandler);
+
     async function endAndClose() {
       try {
         const convId = localStorage.getItem('chatbot_conversation_id');
@@ -394,23 +425,61 @@ export function bindCallViewEvents(router, ctx) {
             headers: { 'Content-Type': 'application/json' }
           });
         }
-      } catch (_) { }
+      } catch (_) {}
       callTerminated = true;
       cleanupCall();
-      router.setPage('call-welcome');
+
+      // Instead of window.confirm, navigate to post-call transfer view when available
+      let transferNumber = null;
+      try { transferNumber = localStorage.getItem('chatbot_transfer_phone_number'); } catch (_) {}
+      if (transferNumber) {
+        router.setPage('postcall-transfer');
+        console.log()
+      } else {
+        router.setPage('call-welcome');
+      }
     }
+
+    // expose end handler for inactivity auto-end
+    endAndCloseRef = endAndClose;
 
     back && back.addEventListener('click', (e) => { e.preventDefault(); endAndClose(); });
     end && end.addEventListener('click', (e) => { e.preventDefault(); endAndClose(); });
     return;
   }
 
- 
+  // NEW: Post-call transfer view bindings
+  if (page === 'postcall-transfer') {
+    const callBtn = document.getElementById('transfer-call-now');
+    const closeBtn = document.getElementById('transfer-close');
+
+    let transferNumber = null;
+    try { transferNumber = localStorage.getItem('chatbot_transfer_phone_number'); } catch (_) {}
+
+    callBtn && callBtn.addEventListener('click', () => {
+      if (transferNumber) {
+        try { window.location.href = `tel:${transferNumber}`; } catch (_) {}
+      }
+      try { localStorage.removeItem('chatbot_transfer_phone_number'); } catch (_) {}
+      // Close the chatbot shell
+      try { document.body.classList.remove('show-chatbot'); } catch (_) {}
+      router.setPage('call-welcome');
+    });
+
+    closeBtn && closeBtn.addEventListener('click', () => {
+      try { localStorage.removeItem('chatbot_transfer_phone_number'); } catch (_) {}
+      // Close the chatbot shell
+      try { document.body.classList.remove('show-chatbot'); } catch (_) {}
+      router.setPage('call-welcome');
+    });
+
+    return;
+  }
 }
 
-// NEW: WebRTC ephemeral token fetch (same approach as new-chat.html)
+// NEW: WebRTC ephemeral token fetch
 async function fetchEphemeralToken(agentId, language, voice, welcomeMessage) {
-  const tokenUrl = 'https://zentrova-chatbot.mygrantgenie.com/realtime/token';
+  const tokenUrl = `${CHATBOT_BASE_URL}realtime/token`;
 
   let customApis = null;
   try {
@@ -444,11 +513,18 @@ async function fetchEphemeralToken(agentId, language, voice, welcomeMessage) {
   return payload.value;
 }
 
-// NEW: handle function calls over RTC data channel (optional RAG search)
+// Handle function calls over RTC data channel (optional RAG search)
 async function handleFunctionCall(functionName, functionCallId, args) {
   try {
     const parsedArgs = JSON.parse(args || '{}');
-    const response = await fetch('https://zentrova-chatbot.mygrantgenie.com/realtime/function-call', {
+
+    // persist transfer phone number if provided
+    if (parsedArgs && parsedArgs.transfer_phone_number) {
+      const num = String(parsedArgs.transfer_phone_number);
+      try { localStorage.setItem('chatbot_transfer_phone_number', num); } catch (_) {}
+    }
+
+    const response = await fetch(`${CHATBOT_BASE_URL}realtime/function-call`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ function_name: functionName, arguments: parsedArgs })
@@ -475,12 +551,14 @@ async function handleFunctionCall(functionName, functionCallId, args) {
   }
 }
 
-// NEW: WebRTC session (mirrors new-chat.html, integrated with call UI)
+// WebRTC session (integrated with call UI)
 async function startRTCSession({ agentId, language, voice, welcomeMessage }) {
   try {
     dispatchCallStatus('connecting');
+    const connectingEl = document.getElementById('call-connecting');
+    if (connectingEl) connectingEl.style.display = 'block';
 
-    // NEW: fallback to stored config (set by chatbot-sdk on load)
+    // Fallback to stored config (set by chatbot-sdk on load)
     const storedAgentId = localStorage.getItem('chatbot_id') || agentId;
     const storedVoice = localStorage.getItem('chatbot_bot_voice') || voice;
     const storedLanguage = localStorage.getItem('chatbot_bot_language') || language;
@@ -488,108 +566,140 @@ async function startRTCSession({ agentId, language, voice, welcomeMessage }) {
 
     const ephemeralKey = await fetchEphemeralToken(storedAgentId, storedLanguage, storedVoice, storedWelcome);
 
-    pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+    pc = new RTCPeerConnection({ iceServers: [{ urls: ['stun:stun.l.google.com:19302'] }] });
 
-    pc.ontrack = (event) => {
+    pc.addEventListener('iceconnectionstatechange', () => {
+      const st = pc.iceConnectionState;
+      if (st === 'disconnected' || st === 'failed') {
+        if (endAndCloseRef) endAndCloseRef();
+      }
+      // We don't hide the loader here; wait for actual audio.
+    });
+
+    // capture mic and add to pc
+    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    localStream.getTracks().forEach((t) => pc.addTrack(t, localStream));
+
+    // helper to start idle checker only once the call is active
+    function startIdleCheckerOnce() {
+      if (idleCheckerStarted) return;
+      idleCheckerStarted = true;
+      lastActivityAt = Date.now();
+      if (inactivityInterval) clearInterval(inactivityInterval);
+      inactivityInterval = setInterval(() => {
+        if (callTerminated) return;
+        const idleForMs = Date.now() - lastActivityAt;
+        if (idleForMs >= 10000) {
+          if (endAndCloseRef) endAndCloseRef();
+        }
+      }, 1000);
+    }
+
+    // remote audio track: start idle checker when audio actually starts
+    pc.addEventListener('track', (ev) => {
+      const [stream] = ev.streams;
       const assistantAudio = document.getElementById('assistantAudio');
       if (assistantAudio) {
-        assistantAudio.srcObject = event.streams[0];
-        assistantAudio.play().catch(() => {});
+        assistantAudio.srcObject = stream;
       }
-      startPlaybackMonitor(event.streams[0]);
-    };
 
-    pc.oniceconnectionstatechange = () => {
-      if (pc.iceConnectionState === 'connected') {
-        dispatchCallStatus('connected');
-      } else if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
-        dispatchCallStatus('error', { error: 'Connection lost' });
-        cleanupCall();
+      // Wait for the remote audio track to unmute (actual audio flowing)
+      const audioTrack = stream && stream.getAudioTracks && stream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.onunmute = () => {
+          bumpActivity();
+          startIdleCheckerOnce();
+          const el = document.getElementById('call-connecting');
+          if (el) el.style.display = 'none';
+          dispatchCallStatus('streaming');
+        };
       }
-    };
+    });
 
-    // Mic capture for RTC
-    localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
-    dispatchCallStatus('mic_granted');
-
-    // Data channel (events)
+    // Data channel: do NOT start idle checker on open; start on first message
     dataChannel = pc.createDataChannel('oai-events');
     dataChannel.onopen = () => {
-      dispatchCallStatus('configured');
-      dataChannel.send(JSON.stringify({ type: 'response.create' }));
-    };
-
-    dataChannel.onmessage = (event) => {
+      // keep loader until audio begins; still bump activity
+      bumpActivity();
       try {
-        const payload = JSON.parse(event.data);
-        const circle = document.getElementById('call-circle');
-        if (payload.type === 'response.audio.delta') {
-          circle && circle.classList.add('responding');
-        } else if (payload.type === 'response.audio.done') {
-          circle && circle.classList.remove('responding');
-        } else if (payload.type === 'response.function_call_arguments.done') {
-          handleFunctionCall(payload.name, payload.call_id, payload.arguments);
-        } else if (payload.type === 'response.done') {
-          dispatchCallStatus('connected');
+        dataChannel.send(JSON.stringify({ type: 'response.create' }));
+      } catch (_) {}
+    };
+    dataChannel.onmessage = (ev) => {
+      bumpActivity();
+      // First message signifies active session; start idle checker if not started
+      startIdleCheckerOnce();
+      try {
+        const msg = JSON.parse(ev.data);
+        if (msg.type === 'response.function_call') {
+          const { name, call_id, arguments: args } = msg;
+          handleFunctionCall(name, call_id, args);
         }
-      } catch (_) {
-        // Non-JSON
-      }
+      } catch (_) {}
     };
 
-    dataChannel.onerror = (error) => {
-      dispatchCallStatus('error', { error: 'Data channel error' });
-    };
-
+    // Offer/SDP exchange with Realtime API
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
 
-    const sdpResponse = await fetch('https://api.openai.com/v1/realtime/calls', {
+    const modelUrl = 'https://api.openai.com/v1/realtime/calls';
+    const sdpRes = await fetch(modelUrl, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${ephemeralKey}`, 'Content-Type': 'application/sdp' },
-      body: offer.sdp,
+      headers: {
+        Authorization: `Bearer ${ephemeralKey}`,
+        'Content-Type': 'application/sdp',
+      },
+      body: pc.localDescription?.sdp || '',
     });
-    if (!sdpResponse.ok) {
-      const errText = await sdpResponse.text();
-      throw new Error(`OpenAI SDP error ${sdpResponse.status}: ${errText}`);
-    }
-    const answer = await sdpResponse.text();
-    await pc.setRemoteDescription({ type: 'answer', sdp: answer });
-  } catch (error) {
-    dispatchCallStatus('error', { error: error.message });
+    if (!sdpRes.ok) throw new Error('SDP exchange failed');
+
+    const answerSdp = await sdpRes.text();
+    const remoteDesc = new RTCSessionDescription({ type: 'answer', sdp: answerSdp });
+    await pc.setRemoteDescription(remoteDesc);
+
+    // Start idle auto-end checker (10s)
+    if (inactivityInterval) { clearInterval(inactivityInterval); }
+    lastActivityAt = Date.now();
+    inactivityInterval = setInterval(() => {
+      if (callTerminated) return;
+      const idleForMs = Date.now() - lastActivityAt;
+      if (idleForMs >= 10000) {
+        if (endAndCloseRef) endAndCloseRef();
+      }
+    }, 1000);
+
+    dispatchCallStatus('connected');
+  } catch (err) {
+    console.error('LiveCall start error:', err);
+    dispatchCallStatus('error', { error: err?.message || 'RTC start failed' });
     cleanupCall();
   }
 }
 
-// Helper: monitor assistant audio levels and toggle circle animation
+// Playback monitor also drives inactivity reset based on assistant audio energy
 function startPlaybackMonitor(stream) {
-  const circle = document.getElementById('call-circle');
-  if (!circle || !stream) return;
   try {
-    if (playbackMonitorRAF) { cancelAnimationFrame(playbackMonitorRAF); playbackMonitorRAF = null; }
-    if (playbackAudioContext) { try { playbackAudioContext.close(); } catch(_){} playbackAudioContext = null; }
+    const AudioCtxCtor = (window.AudioContext || window.webkitAudioContext);
+    if (!AudioCtxCtor) return;
+    playbackAudioContext = new AudioCtxCtor();
+    const source = playbackAudioContext.createMediaStreamSource(stream);
+    playbackSourceNode = source;
+    const analyser = playbackAudioContext.createAnalyser();
+    analyser.fftSize = 2048;
+    source.connect(analyser);
+    playbackAnalyser = analyser;
 
-    playbackAudioContext = new (window.AudioContext || window.webkitAudioContext)();
-    playbackSourceNode = playbackAudioContext.createMediaStreamSource(stream);
-    playbackAnalyser = playbackAudioContext.createAnalyser();
-    playbackAnalyser.fftSize = 2048;
-    playbackSourceNode.connect(playbackAnalyser);
-
-    const data = new Uint8Array(playbackAnalyser.frequencyBinCount);
-    function tick() {
-      try {
-        playbackAnalyser.getByteTimeDomainData(data);
-        let sum = 0;
-        for (let i = 0; i < data.length; i++) {
-          const v = (data[i] - 128) / 128;
-          sum += v * v;
-        }
-        const rms = Math.sqrt(sum / data.length);
-        if (rms > 0.02) circle.classList.add('responding'); else circle.classList.remove('responding');
-      } catch (_) {}
-      playbackMonitorRAF = requestAnimationFrame(tick);
-    }
-    tick();
+    const buffer = new Float32Array(analyser.fftSize);
+    const loop = () => {
+      analyser.getFloatTimeDomainData(buffer);
+      let sum = 0;
+      for (let i = 0; i < buffer.length; i++) sum += buffer[i] * buffer[i];
+      const rms = Math.sqrt(sum / buffer.length);
+      const speaking = rms > 0.02;
+      // reset inactivity on assistant speaking
+      if (speaking) bumpActivity();
+      playbackMonitorRAF = requestAnimationFrame(loop);
+    };
+    loop();
   } catch (_) {}
 }

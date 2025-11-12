@@ -5,6 +5,7 @@ import { Router } from './sdk/router.js';
 import { getRoutes } from './sdk/views.js';
 import { wireShellEvents, bindViewEvents } from './sdk/events.js';
 
+
 const DEFAULT_BRAND = 'Zentrova';
 const BASE_URL = 'https://zentrova-ai.mygrantgenie.com/api/v1';
 
@@ -96,6 +97,7 @@ async function createSDK({ agentId, position, brandColor, brandName } = {}) {
     localStorage.setItem('chatbot_bot_voice', (bot && bot.voice) || 'alloy');
     localStorage.setItem('chatbot_bot_language', (bot && bot.language) || 'English');
     localStorage.setItem('chatbot_bot_welcome_message', welcomeMessage);
+    localStorage.setItem("chatbot_transfer_phone_number", bot && bot?.transfer_phone_number || "");
   } catch (_) {}
 
   applyBrand(effectiveBrand);

@@ -164,10 +164,12 @@ export function bindViewEvents(router, ctx) {
       const code = document.getElementById('country-code').value || '';
       const phone = (document.getElementById('prechat-phone').value || '').trim();
       const question = (document.getElementById('prechat-question').value || '').trim();
+    
       localStorage.setItem('chatbot_user_name', name);
       localStorage.setItem('chatbot_user_email', email);
       localStorage.setItem('chatbot_user_phone', `${code}${phone}`);
       localStorage.setItem('chatbot_user_question', question);
+   
       router.setPage('chat');
     });
     const startBtn = document.getElementById('start-chat-btn');
@@ -181,7 +183,7 @@ export function bindViewEvents(router, ctx) {
     const footerCall = document.getElementById('footer-call');
     footerChat && footerChat.addEventListener('click', () => router.setPage('prechat'));
     // Match html: prechat footer Call routes to 'call'
-    footerCall && footerCall.addEventListener('click', () => router.setPage('call'));
+    footerCall && footerCall.addEventListener('click', () => router.setPage('precall'));
     footerChat && footerChat.classList.add('active');
     footerCall && footerCall.classList.remove('active');
   } else if (page === 'chat') {
@@ -299,7 +301,7 @@ export function bindViewEvents(router, ctx) {
   //   back && back.addEventListener('click', () => router.setPage('call-welcome'));
   //   end && end.addEventListener('click', () => router.setPage('call-welcome'));
   // }
-  else if (page === 'call-welcome' || page === 'precall' || page === 'call') {
+  else if (page === 'call-welcome' || page === 'precall' || page === 'call' || page === 'postcall-transfer') {
     // Delegate call pages to call module
     return bindCallViewEvents(router, ctx);
   } else if (page === 'prechat') {
@@ -327,7 +329,7 @@ export function bindViewEvents(router, ctx) {
     const footerCall = document.getElementById('footer-call');
     footerChat && footerChat.addEventListener('click', () => router.setPage('prechat'));
     // Match html: prechat footer Call routes to 'call'
-    footerCall && footerCall.addEventListener('click', () => router.setPage('call'));
+    footerCall && footerCall.addEventListener('click', () => router.setPage('precall'));
     footerChat && footerChat.classList.add('active');
     footerCall && footerCall.classList.remove('active');
   } else if (page === 'chat') {

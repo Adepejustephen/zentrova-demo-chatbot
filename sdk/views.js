@@ -55,7 +55,7 @@ export function getRoutes(name = 'Zentrova') {
       <div class="chat-panel">
         <div class="chat-header">
           <button id="chat-back-btn" class="icon-btn" aria-label="Back">\u2039</button>
-          Kuda Bot
+          ${name}
         </div>
         <div class="chat-panel-body"><ul class="chatbox"></ul></div>
         <div class="chat-input">
@@ -74,6 +74,9 @@ export function getRoutes(name = 'Zentrova') {
         <div class="call-card" style="border-radius:0">
           <p style="text-align:center; color: var(--muted); margin: 0 0 6px;">Talking to</p>
           <h2 style="text-align:center; font-size: 24px; font-weight: 800; margin: 0 0 8px;">${name} Agent</h2>
+          <div id="call-connecting" style="text-align:center; font-size: 0.9rem; color: var(--muted); margin-bottom: 8px; display:none;">
+            Connecting...
+          </div>
           <div class="call-circle idle" id="call-circle">
             <audio id="assistantAudio" autoplay></audio>
            
@@ -128,6 +131,21 @@ export function getRoutes(name = 'Zentrova') {
         <div class="welcome-footer">
           <button id="footer-chat" class="footer-action"><i class="bi bi-chat-dots"></i><span>Chat</span></button>
           <button id="footer-call" class="footer-action active"><i class="bi bi-telephone-outbound"></i><span>Call</span></button>
+        </div>
+      </div>
+    `,
+    "postcall-transfer": () => `
+      <div class="welcome-screen" style="padding: var(--s-2); ">
+        <div class="call-card" style="border-radius: 12px; text-align:center; padding: 24px; display: flex; flex-direction: column; align-items: center;">
+          <div style="width:72px; height:72px; border-radius:50%; background:#000; display:inline-flex; align-items:center; justify-content:center; margin-bottom:16px; box-shadow:0 4px 16px rgba(0,0,0,0.2);">
+            <i class="bi bi-telephone" style="color:#fff; font-size:28px;"></i>
+          </div>
+          <h3 style="margin: 0 0 4px;">Not satisfied?</h3>
+          <p style="color: var(--muted); margin: 0 0 16px;">Speak to us directly.</p>
+          <div style="display:flex; justify-content:center; gap: 12px;">
+            <button id="transfer-call-now" class="call-primary" style="min-width:120px; border-radius:24px;">Call Now</button>
+            <button id="transfer-close" class="btn-secondary" style="min-width:120px;border-radius:24px; border:1px solid #000; background:#fff; color:#000;">Close</button>
+          </div>
         </div>
       </div>
     `,
