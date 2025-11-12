@@ -1,7 +1,7 @@
 // Call module: handle call-welcome, precall, and live call lifecycle
 // Module globals
-const BASE_URL = 'https://zentrova-ai.mygrantgenie.com/api/v1';
-const CHATBOT_BASE_URL = 'https://zentrova-chatbot.mygrantgenie.com/';
+const BASE_URL = 'https://api.zentai.cloud/api/v1';
+const CHATBOT_BASE_URL = 'https://chatbot.zentai.cloud/';
 let callWS = null;
 let callAudioContext = null;
 let callAudioSource = null;
@@ -589,7 +589,7 @@ async function startRTCSession({ agentId, language, voice, welcomeMessage }) {
       inactivityInterval = setInterval(() => {
         if (callTerminated) return;
         const idleForMs = Date.now() - lastActivityAt;
-        if (idleForMs >= 10000) {
+        if (idleForMs >= IDLE_TIMEOUT_MS) {
           if (endAndCloseRef) endAndCloseRef();
         }
       }, 1000);
@@ -602,8 +602,6 @@ async function startRTCSession({ agentId, language, voice, welcomeMessage }) {
       if (assistantAudio) {
         assistantAudio.srcObject = stream;
       }
-
-      // Wait for the remote audio track to unmute (actual audio flowing)
       const audioTrack = stream && stream.getAudioTracks && stream.getAudioTracks()[0];
       if (audioTrack) {
         audioTrack.onunmute = () => {
@@ -614,24 +612,42 @@ async function startRTCSession({ agentId, language, voice, welcomeMessage }) {
           dispatchCallStatus('streaming');
         };
       }
+      // Monitor remote audio amplitude and bump activity while sound is playing
+      try {
+        playbackAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+        playbackSourceNode = playbackAudioContext.createMediaStreamSource(stream);
+        playbackAnalyser = playbackAudioContext.createAnalyser();
+        playbackAnalyser.fftSize = 256;
+        playbackSourceNode.connect(playbackAnalyser);
+        function monitor() {
+          const arr = new Uint8Array(playbackAnalyser.frequencyBinCount);
+          playbackAnalyser.getByteTimeDomainData(arr);
+          let sum = 0;
+          for (let i = 0; i < arr.length; i++) {
+            const v = (arr[i] - 128) / 128;
+            sum += v * v;
+          }
+          const rms = Math.sqrt(sum / arr.length);
+          if (rms > 0.02) bumpActivity();
+          playbackMonitorRAF = requestAnimationFrame(monitor);
+        }
+        playbackMonitorRAF = requestAnimationFrame(monitor);
+      } catch (_) {}
     });
 
     // Data channel: do NOT start idle checker on open; start on first message
     dataChannel = pc.createDataChannel('oai-events');
     dataChannel.onopen = () => {
-      // keep loader until audio begins; still bump activity
       bumpActivity();
-      try {
-        dataChannel.send(JSON.stringify({ type: 'response.create' }));
-      } catch (_) {}
+      startIdleCheckerOnce();
+      try { dataChannel.send(JSON.stringify({ type: 'response.create' })); } catch (_) {}
     };
     dataChannel.onmessage = (ev) => {
       bumpActivity();
-      // First message signifies active session; start idle checker if not started
       startIdleCheckerOnce();
       try {
         const msg = JSON.parse(ev.data);
-        if (msg.type === 'response.function_call') {
+        if (msg.type === 'response.function_call_arguments.done') {
           const { name, call_id, arguments: args } = msg;
           handleFunctionCall(name, call_id, args);
         }

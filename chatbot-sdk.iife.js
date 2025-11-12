@@ -274,7 +274,7 @@ var ChatbotSDK = (() => {
         </div>
         <div class="call-card" style="border-radius:0">
           <p style="text-align:center; color: var(--muted); margin: 0 0 6px;">Talking to</p>
-          <h2 style="text-align:center; font-size: 24px; font-weight: 800; margin: 0 0 8px;">${name} Agent</h2>
+          <h2 style="text-align:center; font-size: 24px; font-weight: 800; margin: 0 0 8px;">${name} </h2>
           <div id="call-connecting" style="text-align:center; font-size: 0.9rem; color: var(--muted); margin-bottom: 8px; display:none;">
             Connecting...
           </div>
@@ -354,8 +354,8 @@ var ChatbotSDK = (() => {
   }
 
   // sdk/call.js
-  var BASE_URL = "https://zentrova-ai.mygrantgenie.com/api/v1";
-  var CHATBOT_BASE_URL = "https://zentrova-chatbot.mygrantgenie.com/";
+  var BASE_URL = "https://api.zentai.cloud/api/v1";
+  var CHATBOT_BASE_URL = "https://chatbot.zentai.cloud/";
   var callWS = null;
   var callAudioContext = null;
   var callAudioSource = null;
@@ -761,7 +761,7 @@ var ChatbotSDK = (() => {
         inactivityInterval = setInterval(() => {
           if (callTerminated) return;
           const idleForMs = Date.now() - lastActivityAt;
-          if (idleForMs >= 1e4) {
+          if (idleForMs >= IDLE_TIMEOUT_MS) {
             if (endAndCloseRef) endAndCloseRef();
           }
         }, 1e3);
@@ -799,10 +799,32 @@ var ChatbotSDK = (() => {
             dispatchCallStatus("streaming");
           };
         }
+        try {
+          let monitor = function() {
+            const arr = new Uint8Array(playbackAnalyser.frequencyBinCount);
+            playbackAnalyser.getByteTimeDomainData(arr);
+            let sum = 0;
+            for (let i = 0; i < arr.length; i++) {
+              const v = (arr[i] - 128) / 128;
+              sum += v * v;
+            }
+            const rms = Math.sqrt(sum / arr.length);
+            if (rms > 0.02) bumpActivity();
+            playbackMonitorRAF = requestAnimationFrame(monitor);
+          };
+          playbackAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+          playbackSourceNode = playbackAudioContext.createMediaStreamSource(stream);
+          playbackAnalyser = playbackAudioContext.createAnalyser();
+          playbackAnalyser.fftSize = 256;
+          playbackSourceNode.connect(playbackAnalyser);
+          playbackMonitorRAF = requestAnimationFrame(monitor);
+        } catch (_) {
+        }
       });
       dataChannel = pc.createDataChannel("oai-events");
       dataChannel.onopen = () => {
         bumpActivity();
+        startIdleCheckerOnce();
         try {
           dataChannel.send(JSON.stringify({ type: "response.create" }));
         } catch (_) {
@@ -813,7 +835,7 @@ var ChatbotSDK = (() => {
         startIdleCheckerOnce();
         try {
           const msg = JSON.parse(ev.data);
-          if (msg.type === "response.function_call") {
+          if (msg.type === "response.function_call_arguments.done") {
             const { name, call_id, arguments: args } = msg;
             handleFunctionCall(name, call_id, args);
           }
@@ -1297,7 +1319,7 @@ var ChatbotSDK = (() => {
 
   // chatbot-sdk.js
   var DEFAULT_BRAND = "Zentrova";
-  var BASE_URL3 = "https://zentrova-ai.mygrantgenie.com/api/v1";
+  var BASE_URL3 = "https://api.zentai.cloud/api/v1";
   function createShell() {
     const toggle = document.createElement("button");
     toggle.className = "chatbot-toggler";
