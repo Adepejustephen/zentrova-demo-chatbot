@@ -354,8 +354,8 @@ var ChatbotSDK = (() => {
   }
 
   // sdk/call.js
-  var BASE_URL = "https://zentrova-ai.mygrantgenie.com/api/v1";
-  var CHATBOT_BASE_URL = "https://zentrova-chatbot.mygrantgenie.com/";
+  var BASE_URL = "https://api-staging.zentai.cloud/api/v1/";
+  var CHATBOT_BASE_URL = "https://chatbot-staging.zentai.cloud/";
   var callWS = null;
   var callAudioContext = null;
   var callAudioSource = null;
@@ -1297,7 +1297,7 @@ var ChatbotSDK = (() => {
 
   // chatbot-sdk.js
   var DEFAULT_BRAND = "Zentrova";
-  var BASE_URL3 = "https://zentrova-ai.mygrantgenie.com/api/v1";
+  var BASE_URL3 = "https://chatbot-staging.zentai.cloud/";
   function createShell() {
     const toggle = document.createElement("button");
     toggle.className = "chatbot-toggler";
