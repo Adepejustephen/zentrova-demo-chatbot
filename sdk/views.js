@@ -73,7 +73,7 @@ export function getRoutes(name = 'Zentrova') {
         </div>
         <div class="call-card" style="border-radius:0">
           <p style="text-align:center; color: var(--muted); margin: 0 0 6px;">Talking to</p>
-          <h2 style="text-align:center; font-size: 24px; font-weight: 800; margin: 0 0 8px;">${name} Agent</h2>
+          <h2 style="text-align:center; font-size: 24px; font-weight: 800; margin: 0 0 8px;">${name} </h2>
           <div id="call-connecting" style="text-align:center; font-size: 0.9rem; color: var(--muted); margin-bottom: 8px; display:none;">
             Connecting...
           </div>
