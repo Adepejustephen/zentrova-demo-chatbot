@@ -129,7 +129,7 @@ function loadHistory(chatbotID) { try { return JSON.parse(localStorage.getItem(g
 function saveHistory(chatbotID, history) { try { localStorage.setItem(getHistoryKey(chatbotID), JSON.stringify(history)); } catch (_) {} }
 function renderHistory(history) { history.forEach((m) => addMessage(m.text, m.type)); }
 
-const BASE_URL = 'https://zentrova-ai.mygrantgenie.com/api/v1';
+const BASE_URL = 'https://chatbot.zentai.cloud/';
 
 // Bindings: bindViewEvents
 export function bindViewEvents(router, ctx) {
