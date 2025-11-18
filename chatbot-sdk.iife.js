@@ -1035,7 +1035,7 @@ var ChatbotSDK = (() => {
   function renderHistory(history) {
     history.forEach((m) => addMessage(m.text, m.type));
   }
-  var BASE_URL2 = "https://zentrova-ai.mygrantgenie.com/api/v1";
+  var BASE_URL2 = "'https://api.zentai.cloud/api/v1";
   function bindViewEvents(router, ctx) {
     const page = router.getPage();
     const bot = ctx && ctx.bot;

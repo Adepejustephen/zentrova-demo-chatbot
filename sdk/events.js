@@ -129,7 +129,7 @@ function loadHistory(chatbotID) { try { return JSON.parse(localStorage.getItem(g
 function saveHistory(chatbotID, history) { try { localStorage.setItem(getHistoryKey(chatbotID), JSON.stringify(history)); } catch (_) {} }
 function renderHistory(history) { history.forEach((m) => addMessage(m.text, m.type)); }
 
-const BASE_URL = 'https://chatbot.zentai.cloud/';
+const BASE_URL = 'https://api.zentai.cloud/api/v1';
 
 // Bindings: bindViewEvents
 export function bindViewEvents(router, ctx) {
