@@ -1,42 +1,4 @@
-var ChatbotSDK = (() => {
-  var __defProp = Object.defineProperty;
-  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-  var __getOwnPropNames = Object.getOwnPropertyNames;
-  var __hasOwnProp = Object.prototype.hasOwnProperty;
-  var __export = (target, all) => {
-    for (var name in all)
-      __defProp(target, name, { get: all[name], enumerable: true });
-  };
-  var __copyProps = (to, from, except, desc) => {
-    if (from && typeof from === "object" || typeof from === "function") {
-      for (let key of __getOwnPropNames(from))
-        if (!__hasOwnProp.call(to, key) && key !== except)
-          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-    }
-    return to;
-  };
-  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-  // chatbot-sdk.js
-  var chatbot_sdk_exports = {};
-  __export(chatbot_sdk_exports, {
-    ChatbotSDK: () => ChatbotSDK,
-    init: () => init
-  });
-
-  // sdk/styles.js
-  function importStyleLink(href) {
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = href;
-    document.head.appendChild(link);
-  }
-  function importFonts() {
-    importStyleLink("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css");
-    importStyleLink("https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap");
-  }
-  function injectStyles() {
-    const css = `
+var ChatbotSDK=(()=>{var J=Object.defineProperty;var be=Object.getOwnPropertyDescriptor;var ye=Object.getOwnPropertyNames;var xe=Object.prototype.hasOwnProperty;var ve=(e,t)=>{for(var n in t)J(e,n,{get:t[n],enumerable:!0})},we=(e,t,n,o)=>{if(t&&typeof t=="object"||typeof t=="function")for(let c of ye(t))!xe.call(e,c)&&c!==n&&J(e,c,{get:()=>t[c],enumerable:!(o=be(t,c))||o.enumerable});return e};var _e=e=>we(J({},"__esModule",{value:!0}),e);var Oe={};ve(Oe,{ChatbotSDK:()=>he,init:()=>fe});function Q(e){let t=document.createElement("link");t.rel="stylesheet",t.href=e,document.head.appendChild(t)}function ee(){Q("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css"),Q("https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap")}function te(){let e=`
     :root { --brand: #5b2a86; --bg: #ffffff; --text: #1f2937; --muted: #6b7280; --bot-bg: #eef2f7; --user-bg: #eef2ff; --radius: 12px; --radius-lg: 18px; --s-1: 8px; --s-2: 12px; --s-3: 16px; --shadow-1: 0 8px 24px rgba(0, 0, 0, 0.08); --shadow-2: 0 10px 24px rgba(0, 0, 0, 0.12); }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Manrope", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Arial, "Noto Sans", sans-serif; }
     .chatbot-toggler { position: fixed; right: 24px; bottom: 30px; height: 56px; width: 56px; border-radius: 50%; border: none; outline: none; cursor: pointer; background: var(--brand); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-2); z-index: 999; transition: transform 0.25s ease; }
@@ -136,8 +98,7 @@ var ChatbotSDK = (() => {
     @keyframes typingBlink { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
     .chat.error p { background: #fdecea; color: #b00020; border: 1px solid #f5c2c7; }
     .chat.error i { color: #b00020; }
-    `;
-    const callStatusCss = `
+    `,t=`
     /* Call circle + status styles */
     .call-circle { width: 160px; height: 160px; border-radius: 50%; margin: 12px auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(0,0,0,.35); transition: background .2s ease, transform .2s ease; }
     .call-circle.idle { background: var(--brand); }
@@ -156,8 +117,7 @@ var ChatbotSDK = (() => {
     .call-status.status-mic_granted { background:#e6fffa; color:#0f766e; border:1px solid #99f6e4; }
     .call-status.status-mic_error, .call-status.status-error { background:#fee2e2; color:#7f1d1d; border:1px solid #fca5a5; }
     .call-status.status-closed { background:#f3f4f6; color:#374151; border:1px solid #e5e7eb; }
-  `;
-    const rtcAudioCss = `
+  `,n=`
     .audio-indicator { display: none; justify-content: center; align-items: center; gap: 8px; padding: 16px; background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1)); border-radius: 12px; }
     .audio-indicator.active { display: flex; }
     .audio-indicator span { width: 6px; border-radius: 10px; background: linear-gradient(135deg, #667eea, #764ba2); animation: aiPulse 1s ease-in-out infinite; }
@@ -165,50 +125,12 @@ var ChatbotSDK = (() => {
     .audio-indicator span:nth-child(3) { animation-delay: 0.3s; }
     .audio-indicator span:nth-child(4) { animation-delay: 0.45s; }
     @keyframes aiPulse { 0%, 100% { height: 12px; } 50% { height: 32px; } }
-  `;
-    const style = document.createElement("style");
-    style.type = "text/css";
-    style.appendChild(document.createTextNode(css));
-    document.head.appendChild(style);
-  }
-  function applyBrand(brandColor) {
-    if (brandColor) document.documentElement.style.setProperty("--brand", brandColor);
-  }
-
-  // sdk/router.js
-  var Router = class {
-    constructor(root, routes, onRendered) {
-      this.root = root;
-      this.routes = routes || {};
-      this.currentPage = "welcome";
-      this.onRendered = onRendered;
-      localStorage.setItem("chatbot_current_page", this.currentPage);
-    }
-    getPage() {
-      return this.currentPage;
-    }
-    setPage(page) {
-      this.currentPage = page;
-      this.render();
-    }
-    render() {
-      const page = this.getPage();
-      const view = this.routes[page] || this.routes["welcome"];
-      this.root.innerHTML = typeof view === "function" ? view() : view;
-      if (typeof this.onRendered === "function") this.onRendered(this);
-      localStorage.setItem("chatbot_current_page", this.currentPage);
-    }
-  };
-
-  // sdk/views.js
-  function getRoutes(name = "Zentrova") {
-    return {
-      welcome: () => `
+  `,o=document.createElement("style");o.type="text/css",o.appendChild(document.createTextNode(e)),document.head.appendChild(o)}function oe(e){e&&document.documentElement.style.setProperty("--brand",e)}var q=class{constructor(t,n,o){this.root=t,this.routes=n||{},this.currentPage="welcome",this.onRendered=o,localStorage.setItem("chatbot_current_page",this.currentPage)}getPage(){return this.currentPage}setPage(t){this.currentPage=t,this.render()}render(){let t=this.getPage(),n=this.routes[t]||this.routes.welcome;this.root.innerHTML=typeof n=="function"?n():n,typeof this.onRendered=="function"&&this.onRendered(this),localStorage.setItem("chatbot_current_page",this.currentPage)}};function ne(e="Zentrova"){return{welcome:()=>`
       <div class="welcome-screen">
         <div class="welcome-main">
           <div class="welcome-header">
             <h2>Hi!</h2>
-            <p>Welcome to ${name}. Need help? start a conversation with us:</p>
+            <p>Welcome to ${e}. Need help? start a conversation with us:</p>
           </div>
           <button id="start-conversation" class="start-conversation-btn" aria-label="Start Conversation">
             <div>
@@ -223,12 +145,11 @@ var ChatbotSDK = (() => {
           <button id="footer-call" class="footer-action"><i class="bi bi-telephone-outbound"></i><span>Call</span></button>
         </div>
       </div>
-    `,
-      prechat: () => `
+    `,prechat:()=>`
       <div class="welcome-screen">
         <div class="prechat-main">
           <button id="prechat-back-btn" class="icon-btn" aria-label="Back">\u2039</button>
-          <p class="prechat-intro">Hi, Welcome to ${name}. Let us know you and how we may help you?</p>
+          <p class="prechat-intro">Hi, Welcome to ${e}. Let us know you and how we may help you?</p>
           <div class="prechat-card">
             <form id="prechat-form" class="prechat-form" onsubmit="return false;">
               <input id="prechat-name" type="text" placeholder="Name" />
@@ -242,7 +163,7 @@ var ChatbotSDK = (() => {
                 <input id="prechat-phone" type="tel" placeholder="Phone" />
               </div>
               <input id="prechat-question" type="text" placeholder="What is your question?" />
-              <button id="start-chat-btn" class="prechat-start-btn" type="submit"><i class="bi bi-send-fill"></i><span>Start Chat</span></button>
+              <button id="start-chat-btn" class="prechat-start-btn" type="submit" disabled><i class="bi bi-send-fill"></i><span>Start Chat</span></button>
             </form>
           </div>
         </div>
@@ -251,12 +172,11 @@ var ChatbotSDK = (() => {
           <button id="footer-call" class="footer-action"><i class="bi bi-telephone-outbound"></i><span>Call</span></button>
         </div>
       </div>
-    `,
-      chat: () => `
+    `,chat:()=>`
       <div class="chat-panel">
         <div class="chat-header">
           <button id="chat-back-btn" class="icon-btn" aria-label="Back">\u2039</button>
-          ${name}
+          ${e}
         </div>
         <div class="chat-panel-body"><ul class="chatbox"></ul></div>
         <div class="chat-input">
@@ -265,8 +185,7 @@ var ChatbotSDK = (() => {
           <button id="send-btn" class="btn-primary"><i class="bi bi-send-fill"></i></button>
         </div>
       </div>
-    `,
-      call: () => `
+    `,call:()=>`
       <div class="">
         <div class="chat-header">
           <button id="call-back" class="icon-btn" aria-label="Back">\u2039</button>
@@ -274,7 +193,7 @@ var ChatbotSDK = (() => {
         </div>
         <div class="call-card" style="border-radius:0">
           <p style="text-align:center; color: var(--muted); margin: 0 0 6px;">Talking to</p>
-          <h2 style="text-align:center; font-size: 24px; font-weight: 800; margin: 0 0 8px;">${name} </h2>
+          <h2 style="text-align:center; font-size: 24px; font-weight: 800; margin: 0 0 8px;">${e} </h2>
           <div id="call-connecting" style="text-align:center; font-size: 0.9rem; color: var(--muted); margin-bottom: 8px; display:none;">
             Connecting...
           </div>
@@ -287,16 +206,15 @@ var ChatbotSDK = (() => {
           </div>
         </div>
       </div>
-    `,
-      "call-welcome": () => `
+    `,"call-welcome":()=>`
       <div class="welcome-screen call-welcome">
         <div class="chat-header call-wellcome-h">
           <button id="call-welcome-back" class="icon-btn" aria-label="Back">\u2039</button>
-          <span>Call (${name})</span>
+          <span>Call (${e})</span>
         </div>
         <div class="call-welcome-card" style="margin: var(--s-2);">
           <p style="text-align:center; font-size:0.75rem;color:"#eeeeee";margin-bottom:4px;">Talk to</p>
-          <h3 style="text-align:center; margin-bottom:12px;">${name}</h3>
+          <h3 style="text-align:center; margin-bottom:12px;">${e}</h3>
           <div style="display:flex; justify-content:center;">
             <button id="call-welcome-start" class="call-primary">Start</button>
           </div>
@@ -306,15 +224,14 @@ var ChatbotSDK = (() => {
           <button id="footer-call" class="footer-action active"><i class="bi bi-telephone-outbound"></i><span>Call</span></button>
         </div>
       </div>
-    `,
-      precall: () => `
+    `,precall:()=>`
       <div class="welcome-screen">
         <div class="chat-header">
           <button id="precall-back" class="icon-btn" aria-label="Back">\u2039</button>
-          <span>Call (${name})</span>
+          <span>Call (${e})</span>
         </div>
         <div class="precall-card" style="margin: var(--s-2);">
-          <p class="prechat-intro">Hi, Welcome to (${name}). Let us know you and how we may help you?</p>
+          <p class="prechat-intro">Hi, Welcome to (${e}). Let us know you and how we may help you?</p>
           <form id="precall-form" class="prechat-form" onsubmit="return false;">
             <input id="precall-name" type="text" placeholder="Name" />
            
@@ -326,7 +243,11 @@ var ChatbotSDK = (() => {
               </select>
               <input id="precall-phone" type="tel" placeholder="Phone" />
             </div>
-            <button id="precall-start" class="prechat-start-btn" type="submit"><i class="bi bi-send-fill"></i><span>Start Call</span></button>
+            <div class="checkbox-row" style="display:flex; align-items:center; gap:8px;">
+              <input id="precall-consent" type="checkbox" />
+              <label for="precall-consent" style="font-size: 12px; color: var(--muted);">By sharing your details, you agree to our GDPR/CCPA-compliant collection and use of your data for AI support services.</label>
+            </div>
+            <button id="precall-start" class="prechat-start-btn" type="submit" disabled><i class="bi bi-send-fill"></i><span>Start Call</span></button>
           </form>
         </div>
         <div class="welcome-footer">
@@ -334,8 +255,7 @@ var ChatbotSDK = (() => {
           <button id="footer-call" class="footer-action active"><i class="bi bi-telephone-outbound"></i><span>Call</span></button>
         </div>
       </div>
-    `,
-      "postcall-transfer": () => `
+    `,"postcall-transfer":()=>`
       <div class="welcome-screen" style="padding: var(--s-2); ">
         <div class="call-card" style="border-radius: 12px; text-align:center; padding: 24px; display: flex; flex-direction: column; align-items: center;">
           <div style="width:72px; height:72px; border-radius:50%; background:#000; display:inline-flex; align-items:center; justify-content:center; margin-bottom:16px; box-shadow:0 4px 16px rgba(0,0,0,0.2);">
@@ -349,1077 +269,13 @@ var ChatbotSDK = (() => {
           </div>
         </div>
       </div>
-    `
-    };
-  }
-
-  // sdk/call.js
-  var BASE_URL = "https://api-staging.zentai.cloud/api/v1/";
-  var CHATBOT_BASE_URL = "https://chatbot-staging.zentai.cloud/";
-  var callWS = null;
-  var callAudioContext = null;
-  var callAudioSource = null;
-  var callAudioProcessor = null;
-  var callEndInterval = null;
-  var micActive = false;
-  var callInitInProgress = false;
-  var callTerminated = false;
-  var currentPlaybackSource = null;
-  var pc = null;
-  var dataChannel = null;
-  var localStream = null;
-  var playbackAudioContext = null;
-  var playbackAnalyser = null;
-  var playbackSourceNode = null;
-  var playbackMonitorRAF = null;
-  var inactivityInterval = null;
-  var lastActivityAt = Date.now();
-  var endAndCloseRef = null;
-  var idleCheckerStarted = false;
-  function bumpActivity() {
-    lastActivityAt = Date.now();
-  }
-  function cleanupCall() {
-    try {
-      callTerminated = true;
-      if (callAudioProcessor) {
-        callAudioProcessor.disconnect();
-        callAudioProcessor = null;
-      }
-      if (callAudioSource) {
-        callAudioSource.disconnect();
-        if (callAudioSource.mediaStream) callAudioSource.mediaStream.getTracks().forEach((t) => t.stop());
-        callAudioSource = null;
-      }
-      try {
-        if (currentPlaybackSource) {
-          currentPlaybackSource.stop();
-          currentPlaybackSource.disconnect();
-        }
-      } catch (_) {
-      }
-      currentPlaybackSource = null;
-      audioQueue = [];
-      isPlayingAudio = false;
-      nextPlayTime = 0;
-      if (callAudioContext) {
-        try {
-          callAudioContext.close();
-        } catch (_) {
-        }
-        callAudioContext = null;
-      }
-      if (callWS) {
-        try {
-          if (callWS.readyState === WebSocket.OPEN) callWS.close(1e3, "User ended call");
-        } catch (_) {
-        }
-        callWS = null;
-      }
-      if (callEndInterval) {
-        clearInterval(callEndInterval);
-        callEndInterval = null;
-      }
-      try {
-        if (dataChannel) {
-          try {
-            dataChannel.close();
-          } catch (_) {
-          }
-          dataChannel = null;
-        }
-        if (pc) {
-          try {
-            pc.close();
-          } catch (_) {
-          }
-          pc = null;
-        }
-        if (localStream) {
-          try {
-            localStream.getTracks().forEach((t) => t.stop());
-          } catch (_) {
-          }
-          localStream = null;
-        }
-        const assistantAudio = document.getElementById("assistantAudio");
-        if (assistantAudio) assistantAudio.srcObject = null;
-        if (playbackMonitorRAF) {
-          cancelAnimationFrame(playbackMonitorRAF);
-          playbackMonitorRAF = null;
-        }
-        try {
-          if (playbackAnalyser) playbackAnalyser.disconnect();
-        } catch (_) {
-        }
-        playbackAnalyser = null;
-        try {
-          if (playbackSourceNode) playbackSourceNode.disconnect();
-        } catch (_) {
-        }
-        playbackSourceNode = null;
-        if (playbackAudioContext) {
-          try {
-            playbackAudioContext.close();
-          } catch (_) {
-          }
-          playbackAudioContext = null;
-        }
-        if (inactivityInterval != null) {
-          clearInterval(inactivityInterval);
-          inactivityInterval = null;
-        }
-        idleCheckerStarted = false;
-      } catch (_) {
-      }
-      micActive = false;
-      callInitInProgress = false;
-    } catch (_) {
-    }
-  }
-  function getSessionId() {
-    let sid = localStorage.getItem("chatbot_session_id");
-    if (!sid) {
-      sid = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
-        const r = Math.random() * 16 | 0, v = c === "x" ? r : r & 3 | 8;
-        return v.toString(16);
-      });
-      localStorage.setItem("chatbot_session_id", sid);
-    }
-    return sid;
-  }
-  function dispatchCallStatus(status, extra = {}) {
-    try {
-      window.dispatchEvent(new CustomEvent("chatbot-call-status", { detail: { status, ...extra } }));
-    } catch (_) {
-    }
-  }
-  var audioQueue = [];
-  var isPlayingAudio = false;
-  var nextPlayTime = 0;
-  function bindCallViewEvents(router, ctx) {
-    const page = router.getPage();
-    if (page === "call-welcome") {
-      const back = document.getElementById("call-welcome-back");
-      const start = document.getElementById("call-welcome-start");
-      back && back.addEventListener("click", () => router.setPage("welcome"));
-      start && start.addEventListener("click", () => router.setPage("precall"));
-      const fc = document.getElementById("footer-call");
-      const fch = document.getElementById("footer-chat");
-      fc && fc.classList.add("active");
-      fch && fch.classList.remove("active");
-      fch && fch.addEventListener("click", () => router.setPage("prechat"));
-      return;
-    }
-    if (page === "precall") {
-      let setPrecallBusy = function(busy) {
-        if (startBtn) startBtn.disabled = !!busy;
-        const card = document.querySelector(".precall-card");
-        if (card) card.style.pointerEvents = busy ? "none" : "auto";
-        if (card) card.style.opacity = busy ? "0.6" : "1";
-      };
-      const form = document.getElementById("precall-form");
-      const startBtn = document.getElementById("precall-start");
-      const backBtn = document.getElementById("precall-back");
-      async function initCall() {
-        if (callInitInProgress) return;
-        callInitInProgress = true;
-        setPrecallBusy(true);
-        const name = (document.getElementById("precall-name").value || "").trim();
-        const code = document.getElementById("precall-country").value || "";
-        const phone = (document.getElementById("precall-phone").value || "").trim();
-        const message = localStorage.getItem("chatbot_user_question") || "Start call";
-        try {
-          localStorage.setItem("chatbot_user_name", name);
-          localStorage.setItem("chatbot_user_phone", `${code}${phone}`);
-          localStorage.setItem("chatbot_user_question", message);
-        } catch (_) {
-        }
-        const chatbotID = ctx && ctx.chatbotID || localStorage.getItem("chatbot_id");
-        if (!chatbotID) {
-          console.error("Missing chatbotID");
-          callInitInProgress = false;
-          setPrecallBusy(false);
-          return;
-        }
-        try {
-          const res = await fetch(`${BASE_URL}/chatbots/call/${encodeURIComponent(chatbotID)}/start/`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Accept": "application/json" },
-            body: JSON.stringify({ user_phone: `${code}${phone}`, user_name: name })
-          });
-          if (!res.ok) throw new Error("Call init failed");
-          const data = await res.json();
-          try {
-            const convId = data && (data.call_id || data.conversation_id || data.id);
-            if (convId) localStorage.setItem("chatbot_conversation_id", String(convId));
-          } catch (_) {
-          }
-          const bot = ctx && ctx.bot;
-          const agentId = chatbotID;
-          const language = bot && bot.language || localStorage.getItem("chatbot_bot_language") || "English";
-          const voice = bot && bot.voice || localStorage.getItem("chatbot_bot_voice") || "alloy";
-          const welcomeMessage = bot && bot.welcome_message || localStorage.getItem("chatbot_bot_welcome_message") || "Hello! How can I assist you today?";
-          await new Promise((r) => setTimeout(r, 200));
-          startRTCSession({ agentId, language, voice, welcomeMessage });
-          router.setPage("call");
-        } catch (err) {
-          console.error("Init call error:", err);
-          dispatchCallStatus("error", { error: err?.message || "Initialization failed" });
-          alert("Unable to start call. Please try again.");
-        } finally {
-          callInitInProgress = false;
-          setPrecallBusy(false);
-        }
-      }
-      form && form.addEventListener("submit", (e) => {
-        e.preventDefault();
-        initCall();
-      });
-      startBtn && startBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        initCall();
-      });
-      backBtn && backBtn.addEventListener("click", () => router.setPage("call-welcome"));
-      return;
-    }
-    if (page === "call") {
-      let callStatusHandler = function(ev) {
-        const detail = ev.detail || {};
-        const status = detail.status;
-        const el = document.getElementById("call-connecting");
-        if (!el) return;
-        if (status === "connected" || status === "configured") {
-          el.style.display = "none";
-        } else if (status === "connecting") {
-          el.style.display = "block";
-        }
-      };
-      const back = document.getElementById("call-back");
-      const end = document.getElementById("call-end");
-      const connectingEl = document.getElementById("call-connecting");
-      if (connectingEl) connectingEl.style.display = "block";
-      window.addEventListener("chatbot-call-status", callStatusHandler);
-      async function endAndClose() {
-        try {
-          const convId = localStorage.getItem("chatbot_conversation_id");
-          if (convId) {
-            await fetch(`${BASE_URL}/chatbots/call/${encodeURIComponent(convId)}/complete/`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" }
-            });
-            try {
-              localStorage.removeItem("chatbot_conversation_id");
-            } catch (_) {
-            }
-          } else {
-            const sid = getSessionId();
-            await fetch(`${BASE_URL}/chatbots/conversations/${encodeURIComponent(sid)}/end/`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" }
-            });
-          }
-        } catch (_) {
-        }
-        callTerminated = true;
-        cleanupCall();
-        let transferNumber = null;
-        try {
-          transferNumber = localStorage.getItem("chatbot_transfer_phone_number");
-        } catch (_) {
-        }
-        if (transferNumber) {
-          router.setPage("postcall-transfer");
-          console.log();
-        } else {
-          router.setPage("call-welcome");
-        }
-      }
-      endAndCloseRef = endAndClose;
-      back && back.addEventListener("click", (e) => {
-        e.preventDefault();
-        endAndClose();
-      });
-      end && end.addEventListener("click", (e) => {
-        e.preventDefault();
-        endAndClose();
-      });
-      return;
-    }
-    if (page === "postcall-transfer") {
-      const callBtn = document.getElementById("transfer-call-now");
-      const closeBtn = document.getElementById("transfer-close");
-      let transferNumber = null;
-      try {
-        transferNumber = localStorage.getItem("chatbot_transfer_phone_number");
-      } catch (_) {
-      }
-      callBtn && callBtn.addEventListener("click", () => {
-        if (transferNumber) {
-          try {
-            window.location.href = `tel:${transferNumber}`;
-          } catch (_) {
-          }
-        }
-        try {
-          localStorage.removeItem("chatbot_transfer_phone_number");
-        } catch (_) {
-        }
-        try {
-          document.body.classList.remove("show-chatbot");
-        } catch (_) {
-        }
-        router.setPage("call-welcome");
-      });
-      closeBtn && closeBtn.addEventListener("click", () => {
-        try {
-          localStorage.removeItem("chatbot_transfer_phone_number");
-        } catch (_) {
-        }
-        try {
-          document.body.classList.remove("show-chatbot");
-        } catch (_) {
-        }
-        router.setPage("call-welcome");
-      });
-      return;
-    }
-  }
-  async function fetchEphemeralToken(agentId, language, voice, welcomeMessage) {
-    const tokenUrl = `${CHATBOT_BASE_URL}realtime/token`;
-    let customApis = null;
-    try {
-      const raw = localStorage.getItem("chatbot_custom_apis");
-      const parsed = raw ? JSON.parse(raw) : null;
-      customApis = Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
-    } catch (_) {
-      customApis = null;
-    }
-    const body = {};
-    if (agentId) body.agent_id = agentId;
-    if (voice) body.voice = voice;
-    if (language) body.language = language;
-    if (welcomeMessage) body.welcome_message = welcomeMessage;
-    if (customApis) body.custom_apis = customApis;
-    const response = await fetch(tokenUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    });
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to obtain token: ${errorText}`);
-    }
-    const payload = await response.json();
-    if (!payload.value) {
-      throw new Error("Token response missing value field");
-    }
-    return payload.value;
-  }
-  async function handleFunctionCall(functionName, functionCallId, args) {
-    try {
-      const parsedArgs = JSON.parse(args || "{}");
-      if (parsedArgs && parsedArgs.transfer_phone_number) {
-        const num = String(parsedArgs.transfer_phone_number);
-        try {
-          localStorage.setItem("chatbot_transfer_phone_number", num);
-        } catch (_) {
-        }
-      }
-      const response = await fetch(`${CHATBOT_BASE_URL}realtime/function-call`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ function_name: functionName, arguments: parsedArgs })
-      });
-      if (!response.ok) throw new Error(`Function call failed: ${response.statusText}`);
-      const result = await response.json();
-      if (dataChannel && dataChannel.readyState === "open") {
-        const outputEvent = {
-          type: "conversation.item.create",
-          item: { type: "function_call_output", call_id: functionCallId, output: JSON.stringify(result) }
-        };
-        dataChannel.send(JSON.stringify(outputEvent));
-        dataChannel.send(JSON.stringify({ type: "response.create" }));
-      }
-    } catch (error) {
-      if (dataChannel && dataChannel.readyState === "open") {
-        const outputEvent = {
-          type: "conversation.item.create",
-          item: { type: "function_call_output", call_id: functionCallId, output: JSON.stringify({ error: error?.message || "Function call error" }) }
-        };
-        dataChannel.send(JSON.stringify(outputEvent));
-      }
-    }
-  }
-  async function startRTCSession({ agentId, language, voice, welcomeMessage }) {
-    try {
-      let startIdleCheckerOnce = function() {
-        if (idleCheckerStarted) return;
-        idleCheckerStarted = true;
-        lastActivityAt = Date.now();
-        if (inactivityInterval) clearInterval(inactivityInterval);
-        inactivityInterval = setInterval(() => {
-          if (callTerminated) return;
-          const idleForMs = Date.now() - lastActivityAt;
-          if (idleForMs >= IDLE_TIMEOUT_MS) {
-            if (endAndCloseRef) endAndCloseRef();
-          }
-        }, 1e3);
-      };
-      dispatchCallStatus("connecting");
-      const connectingEl = document.getElementById("call-connecting");
-      if (connectingEl) connectingEl.style.display = "block";
-      const storedAgentId = localStorage.getItem("chatbot_id") || agentId;
-      const storedVoice = localStorage.getItem("chatbot_bot_voice") || voice;
-      const storedLanguage = localStorage.getItem("chatbot_bot_language") || language;
-      const storedWelcome = localStorage.getItem("chatbot_bot_welcome_message") || welcomeMessage;
-      const ephemeralKey = await fetchEphemeralToken(storedAgentId, storedLanguage, storedVoice, storedWelcome);
-      pc = new RTCPeerConnection({ iceServers: [{ urls: ["stun:stun.l.google.com:19302"] }] });
-      pc.addEventListener("iceconnectionstatechange", () => {
-        const st = pc.iceConnectionState;
-        if (st === "disconnected" || st === "failed") {
-          if (endAndCloseRef) endAndCloseRef();
-        }
-      });
-      localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-      localStream.getTracks().forEach((t) => pc.addTrack(t, localStream));
-      pc.addEventListener("track", (ev) => {
-        const [stream] = ev.streams;
-        const assistantAudio = document.getElementById("assistantAudio");
-        if (assistantAudio) {
-          assistantAudio.srcObject = stream;
-        }
-        const audioTrack = stream && stream.getAudioTracks && stream.getAudioTracks()[0];
-        if (audioTrack) {
-          audioTrack.onunmute = () => {
-            bumpActivity();
-            startIdleCheckerOnce();
-            const el = document.getElementById("call-connecting");
-            if (el) el.style.display = "none";
-            dispatchCallStatus("streaming");
-          };
-        }
-        try {
-          let monitor = function() {
-            const arr = new Uint8Array(playbackAnalyser.frequencyBinCount);
-            playbackAnalyser.getByteTimeDomainData(arr);
-            let sum = 0;
-            for (let i = 0; i < arr.length; i++) {
-              const v = (arr[i] - 128) / 128;
-              sum += v * v;
-            }
-            const rms = Math.sqrt(sum / arr.length);
-            if (rms > 0.02) bumpActivity();
-            playbackMonitorRAF = requestAnimationFrame(monitor);
-          };
-          playbackAudioContext = new (window.AudioContext || window.webkitAudioContext)();
-          playbackSourceNode = playbackAudioContext.createMediaStreamSource(stream);
-          playbackAnalyser = playbackAudioContext.createAnalyser();
-          playbackAnalyser.fftSize = 256;
-          playbackSourceNode.connect(playbackAnalyser);
-          playbackMonitorRAF = requestAnimationFrame(monitor);
-        } catch (_) {
-        }
-      });
-      dataChannel = pc.createDataChannel("oai-events");
-      dataChannel.onopen = () => {
-        bumpActivity();
-        startIdleCheckerOnce();
-        try {
-          dataChannel.send(JSON.stringify({ type: "response.create" }));
-        } catch (_) {
-        }
-      };
-      dataChannel.onmessage = (ev) => {
-        bumpActivity();
-        startIdleCheckerOnce();
-        try {
-          const msg = JSON.parse(ev.data);
-          if (msg.type === "response.function_call_arguments.done") {
-            const { name, call_id, arguments: args } = msg;
-            handleFunctionCall(name, call_id, args);
-          }
-        } catch (_) {
-        }
-      };
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      const modelUrl = "https://api.openai.com/v1/realtime/calls";
-      const sdpRes = await fetch(modelUrl, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${ephemeralKey}`,
-          "Content-Type": "application/sdp"
-        },
-        body: pc.localDescription?.sdp || ""
-      });
-      if (!sdpRes.ok) throw new Error("SDP exchange failed");
-      const answerSdp = await sdpRes.text();
-      const remoteDesc = new RTCSessionDescription({ type: "answer", sdp: answerSdp });
-      await pc.setRemoteDescription(remoteDesc);
-      if (inactivityInterval) {
-        clearInterval(inactivityInterval);
-      }
-      lastActivityAt = Date.now();
-      inactivityInterval = setInterval(() => {
-        if (callTerminated) return;
-        const idleForMs = Date.now() - lastActivityAt;
-        if (idleForMs >= 1e4) {
-          if (endAndCloseRef) endAndCloseRef();
-        }
-      }, 1e3);
-      dispatchCallStatus("connected");
-    } catch (err) {
-      console.error("LiveCall start error:", err);
-      dispatchCallStatus("error", { error: err?.message || "RTC start failed" });
-      cleanupCall();
-    }
-  }
-
-  // sdk/events.js
-  function wireShellEvents(router) {
-    const toggleBtn = document.querySelector(".chatbot-toggler");
-    const actions = document.querySelector(".chat-actions");
-    const toggleIcon = toggleBtn ? toggleBtn.querySelector("i") : null;
-    function updateTogglerIcon() {
-      if (!toggleIcon) return;
-      toggleIcon.className = actions.classList.contains("show") ? "bi bi-x-lg" : "bi bi-chat-dots";
-    }
-    toggleBtn && toggleBtn.addEventListener("click", () => {
-      const isOpen = actions.classList.toggle("show");
-      if (!isOpen) actions.classList.remove("show");
-      updateTogglerIcon();
-    });
-    const pillToggle = document.getElementById("pill-toggle");
-    pillToggle && pillToggle.addEventListener("click", () => {
-      const prev = router.getPage();
-      if (prev) localStorage.setItem("chatbot_prev_page", prev);
-      document.body.classList.remove("show-chatbot");
-      updateTogglerIcon();
-    });
-    const actionChat = document.getElementById("action-chat");
-    const actionCall = document.getElementById("action-call");
-    actionChat && actionChat.addEventListener("click", () => {
-      actions.classList.remove("show");
-      document.body.classList.add("show-chatbot");
-      updateTogglerIcon();
-      const storedPage = localStorage.getItem("chatbot_current_page");
-      const hasUser = localStorage.getItem("chatbot_user_name");
-      router.setPage(storedPage === "chat" || hasUser ? "chat" : "welcome");
-    });
-    actionCall && actionCall.addEventListener("click", () => {
-      actions.classList.remove("show");
-      document.body.classList.add("show-chatbot");
-      updateTogglerIcon();
-      router.setPage("call-welcome");
-    });
-  }
-  function addMessage(text, type) {
-    const chatbox = document.querySelector(".chatbox");
-    if (!chatbox) return;
-    const li = document.createElement("li");
-    if (type === "typing") {
-      li.className = "chat typing";
-      li.innerHTML = `<i class="bi bi-robot"></i><p class="typing"><span></span><span></span><span></span></p>`;
-    } else {
-      const variant = type === "error" ? "error" : type;
-      li.className = `chat ${variant}`;
-      if (variant === "incoming") {
-        li.innerHTML = `<i class="bi bi-robot"></i><div class="bubble">${renderMarkdown(text)}</div>`;
-      } else if (variant === "error") {
-        li.innerHTML = `<i class="bi bi-robot"></i><p>${escapeHtml(text).replace(/\n/g, "<br>")}</p>`;
-      } else {
-        li.innerHTML = `<p>${escapeHtml(text).replace(/\n/g, "<br>")}</p>`;
-      }
-    }
-    chatbox.appendChild(li);
-    chatbox.scrollTop = chatbox.scrollHeight;
-    return li;
-  }
-  function escapeHtml(str) {
-    return (str || "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
-  }
-  function renderMarkdown(md) {
-    const esc = escapeHtml(md || "");
-    const lines = esc.split("\n");
-    let html = "";
-    let inCode = false;
-    let listType = null;
-    function closeList() {
-      if (listType) {
-        html += `</${listType}>`;
-        listType = null;
-      }
-    }
-    function applyInline(t) {
-      return t.replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/\*([^*]+)\*/g, "<em>$1</em>");
-    }
-    for (let i = 0; i < lines.length; i++) {
-      let line = lines[i];
-      if (line.trim().startsWith("```")) {
-        if (!inCode) {
-          closeList();
-          inCode = true;
-          html += "<pre><code>";
-        } else {
-          inCode = false;
-          html += "</code></pre>";
-        }
-        continue;
-      }
-      if (inCode) {
-        html += line + "\n";
-        continue;
-      }
-      if (/^###\s+/.test(line)) {
-        closeList();
-        html += "<h3>" + line.replace(/^###\s+/, "") + "</h3>";
-        continue;
-      }
-      if (/^##\s+/.test(line)) {
-        closeList();
-        html += "<h2>" + line.replace(/^##\s+/, "") + "</h2>";
-        continue;
-      }
-      if (/^#\s+/.test(line)) {
-        closeList();
-        html += "<h1>" + line.replace(/^#\s+/, "") + "</h1>";
-        continue;
-      }
-      if (/^\s*\d+\.\s+/.test(line)) {
-        const item = line.replace(/^\s*\d+\.\s+/, "");
-        if (listType !== "ol") {
-          closeList();
-          listType = "ol";
-          html += "<ol>";
-        }
-        html += "<li>" + applyInline(item) + "</li>";
-        continue;
-      }
-      if (/^\s*[-*]\s+/.test(line)) {
-        const item = line.replace(/^\s*[-*]\s+/, "");
-        if (listType !== "ul") {
-          closeList();
-          listType = "ul";
-          html += "<ul>";
-        }
-        html += "<li>" + applyInline(item) + "</li>";
-        continue;
-      }
-      if (line.trim() === "") {
-        closeList();
-        continue;
-      }
-      closeList();
-      html += "<p>" + applyInline(line) + "</p>";
-    }
-    closeList();
-    return html;
-  }
-  function getHistoryKey(chatbotID) {
-    return `chatbot_history_${chatbotID || "default"}`;
-  }
-  function loadHistory(chatbotID) {
-    try {
-      return JSON.parse(localStorage.getItem(getHistoryKey(chatbotID))) || [];
-    } catch (_) {
-      return [];
-    }
-  }
-  function saveHistory(chatbotID, history) {
-    try {
-      localStorage.setItem(getHistoryKey(chatbotID), JSON.stringify(history));
-    } catch (_) {
-    }
-  }
-  function renderHistory(history) {
-    history.forEach((m) => addMessage(m.text, m.type));
-  }
-  var BASE_URL2 = "https://api-staging.zentai.cloud/api/v1/";
-  function bindViewEvents(router, ctx) {
-    const page = router.getPage();
-    const bot = ctx && ctx.bot;
-    const chatbotID = ctx && ctx.chatbotID;
-    const welcomeMsg = bot && bot.welcome_message || "Hello! How can I help you today?";
-    if (page === "welcome") {
-      const start = document.getElementById("start-conversation");
-      start && start.addEventListener("click", () => router.setPage("prechat"));
-      const footerChat = document.getElementById("footer-chat");
-      footerChat && footerChat.addEventListener("click", () => router.setPage("prechat"));
-      const footerCall = document.getElementById("footer-call");
-      footerCall && footerCall.addEventListener("click", () => router.setPage("call-welcome"));
-    } else if (page === "call-welcome") {
-      const back = document.getElementById("call-welcome-back");
-      const start = document.getElementById("call-welcome-start");
-      back && back.addEventListener("click", () => router.setPage("welcome"));
-      start && start.addEventListener("click", () => router.setPage("precall"));
-      const fc = document.getElementById("footer-call");
-      const fch = document.getElementById("footer-chat");
-      fc && fc.classList.add("active");
-      fch && fch.classList.remove("active");
-      fch && fch.addEventListener("click", () => router.setPage("prechat"));
-    } else if (page === "prechat") {
-      const form = document.getElementById("prechat-form");
-      form && form.addEventListener("submit", () => {
-        const name = (document.getElementById("prechat-name").value || "").trim();
-        const email = (document.getElementById("prechat-email").value || "").trim();
-        const code = document.getElementById("country-code").value || "";
-        const phone = (document.getElementById("prechat-phone").value || "").trim();
-        const question = (document.getElementById("prechat-question").value || "").trim();
-        localStorage.setItem("chatbot_user_name", name);
-        localStorage.setItem("chatbot_user_email", email);
-        localStorage.setItem("chatbot_user_phone", `${code}${phone}`);
-        localStorage.setItem("chatbot_user_question", question);
-        router.setPage("chat");
-      });
-      const startBtn = document.getElementById("start-chat-btn");
-      startBtn && startBtn.addEventListener("click", () => {
-        const formEl = document.getElementById("prechat-form");
-        formEl && formEl.dispatchEvent(new Event("submit"));
-      });
-      const preBack = document.getElementById("prechat-back-btn");
-      preBack && preBack.addEventListener("click", () => router.setPage("welcome"));
-      const footerChat = document.getElementById("footer-chat");
-      const footerCall = document.getElementById("footer-call");
-      footerChat && footerChat.addEventListener("click", () => router.setPage("prechat"));
-      footerCall && footerCall.addEventListener("click", () => router.setPage("precall"));
-      footerChat && footerChat.classList.add("active");
-      footerCall && footerCall.classList.remove("active");
-    } else if (page === "chat") {
-      let getSessionId2 = function() {
-        let sid = localStorage.getItem("chatbot_session_id");
-        if (!sid) {
-          sid = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
-            const r = Math.random() * 16 | 0, v = c === "x" ? r : r & 3 | 8;
-            return v.toString(16);
-          });
-          localStorage.setItem("chatbot_session_id", sid);
-        }
-        return sid;
-      }, persistMessage = function(text, type) {
-        if (type === "error") return;
-        history.push({ text, type, ts: Date.now() });
-        saveHistory(chatbotID, history);
-      };
-      const name = localStorage.getItem("chatbot_user_name") || "Guest";
-      const email = localStorage.getItem("chatbot_user_email") || "";
-      const phone = localStorage.getItem("chatbot_user_phone") || "";
-      const question = localStorage.getItem("chatbot_user_question") || "";
-      let history = loadHistory(chatbotID);
-      if (history.length > 0) {
-        renderHistory(history);
-      } else {
-        addMessage(welcomeMsg, "incoming");
-      }
-      const input = document.getElementById("chat-input");
-      const send = document.getElementById("send-btn");
-      const attach = document.getElementById("attach-btn");
-      async function sendToBot(userText) {
-        addMessage(userText, "outgoing");
-        persistMessage(userText, "outgoing");
-        const last = document.querySelector(".chatbox li:last-child");
-        if (last && last.classList.contains("outgoing")) {
-          const tag = document.createElement("span");
-          tag.className = "sender-tag";
-          tag.textContent = name ? name : "You";
-          last.appendChild(tag);
-        }
-        const stopTyping = showTyping();
-        const payload = {
-          session_id: getSessionId2(),
-          message: userText,
-          user_email: email,
-          user_name: name,
-          user_phone: phone
-        };
-        try {
-          if (!chatbotID) throw new Error("Missing chatbotID");
-          const res = await fetch(`${BASE_URL2}/chatbots/widget/${encodeURIComponent(chatbotID)}/chat/`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-          });
-          const ok = res.ok;
-          const data = ok ? await res.json() : null;
-          stopTyping();
-          if (!ok) throw new Error("Request failed");
-          const botReply = data && data.bot_message && data.bot_message.message || data?.data?.response || data?.response || data?.message || "Okay.";
-          addMessage(botReply, "incoming");
-          persistMessage(botReply, "incoming");
-        } catch (err) {
-          stopTyping();
-          const errMsg = "Could not process your request at the moment. Please try again.";
-          addMessage(errMsg, "error");
-        }
-      }
-      if (question && history.length === 0) {
-        sendToBot(question);
-      }
-      send && send.addEventListener("click", () => {
-        const text = (input && input.value || "").trim();
-        if (!text) return;
-        input.value = "";
-        sendToBot(text);
-      });
-      input && input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          const text = (input && input.value || "").trim();
-          if (!text) return;
-          input.value = "";
-          sendToBot(text);
-        }
-      });
-      attach && attach.addEventListener("click", () => {
-      });
-      const back = document.getElementById("chat-back-btn");
-      back && back.addEventListener("click", () => router.setPage("prechat"));
-    } else if (page === "call-welcome" || page === "precall" || page === "call" || page === "postcall-transfer") {
-      return bindCallViewEvents(router, ctx);
-    } else if (page === "prechat") {
-      const form = document.getElementById("prechat-form");
-      form && form.addEventListener("submit", () => {
-        const name = (document.getElementById("prechat-name").value || "").trim();
-        const email = (document.getElementById("prechat-email").value || "").trim();
-        const code = document.getElementById("country-code").value || "";
-        const phone = (document.getElementById("prechat-phone").value || "").trim();
-        const question = (document.getElementById("prechat-question").value || "").trim();
-        localStorage.setItem("chatbot_user_name", name);
-        localStorage.setItem("chatbot_user_email", email);
-        localStorage.setItem("chatbot_user_phone", `${code}${phone}`);
-        localStorage.setItem("chatbot_user_question", question);
-        router.setPage("chat");
-      });
-      const startBtn = document.getElementById("start-chat-btn");
-      startBtn && startBtn.addEventListener("click", () => {
-        const formEl = document.getElementById("prechat-form");
-        formEl && formEl.dispatchEvent(new Event("submit"));
-      });
-      const preBack = document.getElementById("prechat-back-btn");
-      preBack && preBack.addEventListener("click", () => router.setPage("welcome"));
-      const footerChat = document.getElementById("footer-chat");
-      const footerCall = document.getElementById("footer-call");
-      footerChat && footerChat.addEventListener("click", () => router.setPage("prechat"));
-      footerCall && footerCall.addEventListener("click", () => router.setPage("precall"));
-      footerChat && footerChat.classList.add("active");
-      footerCall && footerCall.classList.remove("active");
-    } else if (page === "chat") {
-      let getSessionId2 = function() {
-        let sid = localStorage.getItem("chatbot_session_id");
-        if (!sid) {
-          sid = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
-            const r = Math.random() * 16 | 0, v = c === "x" ? r : r & 3 | 8;
-            return v.toString(16);
-          });
-          localStorage.setItem("chatbot_session_id", sid);
-        }
-        return sid;
-      }, persistMessage = function(text, type) {
-        if (type === "error") return;
-        history.push({ text, type, ts: Date.now() });
-        saveHistory(chatbotID, history);
-      };
-      const name = localStorage.getItem("chatbot_user_name") || "Guest";
-      const email = localStorage.getItem("chatbot_user_email") || "";
-      const phone = localStorage.getItem("chatbot_user_phone") || "";
-      const question = localStorage.getItem("chatbot_user_question") || "";
-      let history = loadHistory(chatbotID);
-      if (history.length > 0) {
-        renderHistory(history);
-      } else {
-        addMessage(welcomeMsg, "incoming");
-      }
-      const input = document.getElementById("chat-input");
-      const send = document.getElementById("send-btn");
-      const attach = document.getElementById("attach-btn");
-      async function sendToBot(userText) {
-        addMessage(userText, "outgoing");
-        persistMessage(userText, "outgoing");
-        const last = document.querySelector(".chatbox li:last-child");
-        if (last && last.classList.contains("outgoing")) {
-          const tag = document.createElement("span");
-          tag.className = "sender-tag";
-          tag.textContent = name ? name : "You";
-          last.appendChild(tag);
-        }
-        const stopTyping = showTyping();
-        const payload = {
-          session_id: getSessionId2(),
-          message: userText,
-          user_email: email,
-          user_name: name,
-          user_phone: phone
-        };
-        try {
-          if (!chatbotID) throw new Error("Missing chatbotID");
-          const res = await fetch(`${BASE_URL2}/chatbots/widget/${encodeURIComponent(chatbotID)}/chat/`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-          });
-          const ok = res.ok;
-          const data = ok ? await res.json() : null;
-          stopTyping();
-          if (!ok) throw new Error("Request failed");
-          const botReply = data && data.bot_message && data.bot_message.message || data?.data?.response || data?.response || data?.message || "Okay.";
-          addMessage(botReply, "incoming");
-          persistMessage(botReply, "incoming");
-        } catch (err) {
-          stopTyping();
-          const errMsg = "Could not process your request at the moment. Please try again.";
-          addMessage(errMsg, "error");
-        }
-      }
-      if (question && history.length === 0) {
-        sendToBot(question);
-      }
-      send && send.addEventListener("click", () => {
-        const text = (input && input.value || "").trim();
-        if (!text) return;
-        input.value = "";
-        sendToBot(text);
-      });
-      input && input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          const text = (input && input.value || "").trim();
-          if (!text) return;
-          input.value = "";
-          sendToBot(text);
-        }
-      });
-      attach && attach.addEventListener("click", () => {
-      });
-      const back = document.getElementById("chat-back-btn");
-      back && back.addEventListener("click", () => router.setPage("prechat"));
-    } else if (page === "call-welcome") {
-      const back = document.getElementById("call-back");
-      const end = document.getElementById("call-end");
-      back && back.addEventListener("click", () => router.setPage("call-welcome"));
-      end && end.addEventListener("click", () => router.setPage("call-welcome"));
-    }
-  }
-  function showTyping() {
-    const el = addMessage("", "typing");
-    return function stopTyping() {
-      if (el && el.parentNode) el.parentNode.removeChild(el);
-    };
-  }
-  window.addEventListener("chatbot-call-status", (ev) => {
-  });
-  window.addEventListener("chatbot-call-status", (ev) => {
-    const status = ev?.detail?.status || "";
-    const endBtn = document.getElementById("call-end");
-    const isConnecting = status === "connecting";
-    if (endBtn) {
-      endBtn.classList.toggle("loading", isConnecting);
-      endBtn.disabled = isConnecting;
-    }
-  });
-
-  // chatbot-sdk.js
-  var DEFAULT_BRAND = "Zentrova";
-  var BASE_URL3 = "https://chatbot-staging.zentai.cloud/";
-  function createShell() {
-    const toggle = document.createElement("button");
-    toggle.className = "chatbot-toggler";
-    toggle.setAttribute("aria-label", "Open chat");
-    toggle.innerHTML = '<i class="bi bi-chat-dots"></i>';
-    const actions = document.createElement("div");
-    actions.className = "chat-actions";
-    actions.innerHTML = `
+    `}}function ke(e){try{if(!e||e.length!==2)return"";let t=[...e.toUpperCase()].map(n=>127397+n.charCodeAt(0));return String.fromCodePoint(...t)}catch{return""}}async function j(e,t="+234"){let n=document.getElementById(e);if(n){try{n.innerHTML='<option value="">Loading countries...</option>'}catch{}try{let o=await fetch("https://restcountries.com/v3.1/all?fields=name,cca2,idd");if(!o.ok)throw new Error("Failed to fetch countries");let c=await o.json(),i=[];for(let s of c){let p=s?.name?.common||"",r=s?.cca2||"",d=s?.idd?.root||"",u=Array.isArray(s?.idd?.suffixes)?s.idd.suffixes:[];if(!p||!d||u.length===0)continue;let _=ke(r);for(let h of u){let y=`${d}${h}`;i.push({name:p,dial:y,flag:_})}}i.sort((s,p)=>s.name.localeCompare(p.name));let a="";for(let s of i){let p=s.dial===t?" selected":"",r=`${s.flag?s.flag+" ":""}${s.name} (${s.dial})`;a+=`<option value="${s.dial}"${p}>${r}</option>`}if(a)n.innerHTML=a;else throw new Error("No countries with dialing codes")}catch(o){console.warn("Country population failed:",o?.message||o);try{(!n.innerHTML||n.innerHTML.includes("Loading countries"))&&(n.innerHTML=['<option value="+234">\u{1F1F3}\u{1F1EC} Nigeria (+234)</option>','<option value="+1">\u{1F1FA}\u{1F1F8} United States (+1)</option>','<option value="+44">\u{1F1EC}\u{1F1E7} United Kingdom (+44)</option>'].join(""))}catch{}}}}var K="https://api.zentai.cloud/api/v1",ae="https://chatbot.zentai.cloud/",H=null,V=null,z=null,G=null,Y=null,Ee=!1,$=!1,W=!1,U=null,C=null,I=null,T=null,M=null,P=null,R=null,O=null,L=null,D=Date.now(),A=null,X=!1;function F(){D=Date.now()}function ce(){try{W=!0,G&&(G.disconnect(),G=null),z&&(z.disconnect(),z.mediaStream&&z.mediaStream.getTracks().forEach(e=>e.stop()),z=null);try{U&&(U.stop(),U.disconnect())}catch{}if(U=null,Ie=[],Ce=!1,Be=0,V){try{V.close()}catch{}V=null}if(H){try{H.readyState===WebSocket.OPEN&&H.close(1e3,"User ended call")}catch{}H=null}Y&&(clearInterval(Y),Y=null);try{if(I){try{I.close()}catch{}I=null}if(C){try{C.close()}catch{}C=null}if(T){try{T.getTracks().forEach(t=>t.stop())}catch{}T=null}let e=document.getElementById("assistantAudio");e&&(e.srcObject=null),O&&(cancelAnimationFrame(O),O=null);try{P&&P.disconnect()}catch{}P=null;try{R&&R.disconnect()}catch{}if(R=null,M){try{M.close()}catch{}M=null}L!=null&&(clearInterval(L),L=null),X=!1}catch{}Ee=!1,$=!1}catch{}}function Se(){let e=localStorage.getItem("chatbot_session_id");return e||(e="xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,function(t){let n=Math.random()*16|0;return(t==="x"?n:n&3|8).toString(16)}),localStorage.setItem("chatbot_session_id",e)),e}function N(e,t={}){try{window.dispatchEvent(new CustomEvent("chatbot-call-status",{detail:{status:e,...t}}))}catch{}}var Ie=[],Ce=!1,Be=0;function re(e,t){let n=e.getPage();if(n==="call-welcome"){let o=document.getElementById("call-welcome-back"),c=document.getElementById("call-welcome-start");o&&o.addEventListener("click",()=>e.setPage("welcome")),c&&c.addEventListener("click",()=>e.setPage("precall"));let i=document.getElementById("footer-call"),a=document.getElementById("footer-chat");i&&i.classList.add("active"),a&&a.classList.remove("active"),a&&a.addEventListener("click",()=>e.setPage("prechat"));return}if(n==="precall"){let d=function(){let h=(a&&a.value||"").trim(),k=(p&&p.value||"").trim().length>=7,f=!!(r&&r.checked),b=!!h&&k&&f;c&&(c.disabled=!b)},u=function(h){c&&(c.disabled=!!h);let y=document.querySelector(".precall-card");y&&(y.style.pointerEvents=h?"none":"auto"),y&&(y.style.opacity=h?"0.6":"1")},o=document.getElementById("precall-form"),c=document.getElementById("precall-start"),i=document.getElementById("precall-back"),a=document.getElementById("precall-name"),s=document.getElementById("precall-country"),p=document.getElementById("precall-phone"),r=document.getElementById("precall-consent");j("precall-country","+234"),d(),a&&a.addEventListener("input",d),p&&p.addEventListener("input",d),s&&s.addEventListener("change",d),r&&r.addEventListener("change",d);async function _(){if($)return;$=!0,u(!0);let h=(document.getElementById("precall-name").value||"").trim(),y=document.getElementById("precall-country").value||"",k=(document.getElementById("precall-phone").value||"").trim(),f=localStorage.getItem("chatbot_user_question")||"Start call";try{localStorage.setItem("chatbot_user_name",h),localStorage.setItem("chatbot_user_phone",`${y}${k}`),localStorage.setItem("chatbot_user_question",f)}catch{}let b=t&&t.chatbotID||localStorage.getItem("chatbot_id");if(!b){console.error("Missing chatbotID"),$=!1,u(!1);return}try{let l=await fetch(`${K}/chatbots/call/${encodeURIComponent(b)}/start/`,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({user_phone:`${y}${k}`,user_name:h})});if(!l.ok)throw new Error("Call init failed");let m=await l.json();try{let S=m&&(m.call_id||m.conversation_id||m.id);S&&localStorage.setItem("chatbot_conversation_id",String(S))}catch{}let g=t&&t.bot,w=b,x=g&&g.language||localStorage.getItem("chatbot_bot_language")||"English",E=g&&g.voice||localStorage.getItem("chatbot_bot_voice")||"alloy",v=g&&g.welcome_message||localStorage.getItem("chatbot_bot_welcome_message")||"Hello! How can I assist you today?";await new Promise(S=>setTimeout(S,200)),Ae({agentId:w,language:x,voice:E,welcomeMessage:v}),e.setPage("call")}catch(l){console.error("Init call error:",l),N("error",{error:l?.message||"Initialization failed"}),alert("Unable to start call. Please try again.")}finally{$=!1,u(!1)}}o&&o.addEventListener("submit",h=>{h.preventDefault(),!(c&&c.disabled)&&_()}),c&&c.addEventListener("click",h=>{h.preventDefault(),!(c&&c.disabled)&&_()}),i&&i.addEventListener("click",()=>e.setPage("call-welcome"));return}if(n==="call"){let a=function(p){let d=(p.detail||{}).status,u=document.getElementById("call-connecting");u&&(d==="connected"||d==="configured"?u.style.display="none":d==="connecting"&&(u.style.display="block"))},o=document.getElementById("call-back"),c=document.getElementById("call-end"),i=document.getElementById("call-connecting");i&&(i.style.display="block"),window.addEventListener("chatbot-call-status",a);async function s(){try{let r=localStorage.getItem("chatbot_conversation_id");if(r){await fetch(`${K}/chatbots/call/${encodeURIComponent(r)}/complete/`,{method:"POST",headers:{"Content-Type":"application/json"}});try{localStorage.removeItem("chatbot_conversation_id")}catch{}}else{let d=Se();await fetch(`${K}/chatbots/conversations/${encodeURIComponent(d)}/end/`,{method:"POST",headers:{"Content-Type":"application/json"}})}}catch{}W=!0,ce();let p=null;try{p=localStorage.getItem("chatbot_transfer_phone_number")}catch{}p?(e.setPage("postcall-transfer"),console.log()):e.setPage("call-welcome")}A=s,o&&o.addEventListener("click",p=>{p.preventDefault(),s()}),c&&c.addEventListener("click",p=>{p.preventDefault(),s()});return}if(n==="postcall-transfer"){let o=document.getElementById("transfer-call-now"),c=document.getElementById("transfer-close"),i=null;try{i=localStorage.getItem("chatbot_transfer_phone_number")}catch{}o&&o.addEventListener("click",()=>{if(i)try{window.location.href=`tel:${i}`}catch{}try{localStorage.removeItem("chatbot_transfer_phone_number")}catch{}try{document.body.classList.remove("show-chatbot")}catch{}e.setPage("call-welcome")}),c&&c.addEventListener("click",()=>{try{localStorage.removeItem("chatbot_transfer_phone_number")}catch{}try{document.body.classList.remove("show-chatbot")}catch{}e.setPage("call-welcome")});return}}async function Le(e,t,n,o){let c=`${ae}realtime/token`,i=null;try{let r=localStorage.getItem("chatbot_custom_apis"),d=r?JSON.parse(r):null;i=Array.isArray(d)&&d.length>0?d:null}catch{i=null}let a={};e&&(a.agent_id=e),n&&(a.voice=n),t&&(a.language=t),o&&(a.welcome_message=o),i&&(a.custom_apis=i);let s=await fetch(c,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(a)});if(!s.ok){let r=await s.text();throw new Error(`Failed to obtain token: ${r}`)}let p=await s.json();if(!p.value)throw new Error("Token response missing value field");return p.value}async function Pe(e,t,n){try{let o=JSON.parse(n||"{}");if(o&&o.transfer_phone_number){let a=String(o.transfer_phone_number);try{localStorage.setItem("chatbot_transfer_phone_number",a)}catch{}}let c=await fetch(`${ae}realtime/function-call`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({function_name:e,arguments:o})});if(!c.ok)throw new Error(`Function call failed: ${c.statusText}`);let i=await c.json();if(I&&I.readyState==="open"){let a={type:"conversation.item.create",item:{type:"function_call_output",call_id:t,output:JSON.stringify(i)}};I.send(JSON.stringify(a)),I.send(JSON.stringify({type:"response.create"}))}}catch(o){if(I&&I.readyState==="open"){let c={type:"conversation.item.create",item:{type:"function_call_output",call_id:t,output:JSON.stringify({error:o?.message||"Function call error"})}};I.send(JSON.stringify(c))}}}async function Ae({agentId:e,language:t,voice:n,welcomeMessage:o}){try{let d=function(){X||(X=!0,D=Date.now(),L&&clearInterval(L),L=setInterval(()=>{if(W)return;Date.now()-D>=IDLE_TIMEOUT_MS&&A&&A()},1e3))};N("connecting");let c=document.getElementById("call-connecting");c&&(c.style.display="block");let i=localStorage.getItem("chatbot_id")||e,a=localStorage.getItem("chatbot_bot_voice")||n,s=localStorage.getItem("chatbot_bot_language")||t,p=localStorage.getItem("chatbot_bot_welcome_message")||o,r=await Le(i,s,a,p);C=new RTCPeerConnection({iceServers:[{urls:["stun:stun.l.google.com:19302"]}]}),C.addEventListener("iceconnectionstatechange",()=>{let f=C.iceConnectionState;(f==="disconnected"||f==="failed")&&A&&A()}),T=await navigator.mediaDevices.getUserMedia({audio:!0,video:!1}),T.getTracks().forEach(f=>C.addTrack(f,T)),C.addEventListener("track",f=>{let[b]=f.streams,l=document.getElementById("assistantAudio");l&&(l.srcObject=b);let m=b&&b.getAudioTracks&&b.getAudioTracks()[0];m&&(m.onunmute=()=>{F(),d();let g=document.getElementById("call-connecting");g&&(g.style.display="none"),N("streaming")});try{let g=function(){let w=new Uint8Array(P.frequencyBinCount);P.getByteTimeDomainData(w);let x=0;for(let v=0;v<w.length;v++){let S=(w[v]-128)/128;x+=S*S}Math.sqrt(x/w.length)>.02&&F(),O=requestAnimationFrame(g)};M=new(window.AudioContext||window.webkitAudioContext),R=M.createMediaStreamSource(b),P=M.createAnalyser(),P.fftSize=256,R.connect(P),O=requestAnimationFrame(g)}catch{}}),I=C.createDataChannel("oai-events"),I.onopen=()=>{F(),d();try{I.send(JSON.stringify({type:"response.create"}))}catch{}},I.onmessage=f=>{F(),d();try{let b=JSON.parse(f.data);if(b.type==="response.function_call_arguments.done"){let{name:l,call_id:m,arguments:g}=b;Pe(l,m,g)}}catch{}};let u=await C.createOffer();await C.setLocalDescription(u);let h=await fetch("https://api.openai.com/v1/realtime/calls",{method:"POST",headers:{Authorization:`Bearer ${r}`,"Content-Type":"application/sdp"},body:C.localDescription?.sdp||""});if(!h.ok)throw new Error("SDP exchange failed");let y=await h.text(),k=new RTCSessionDescription({type:"answer",sdp:y});await C.setRemoteDescription(k),L&&clearInterval(L),D=Date.now(),L=setInterval(()=>{if(W)return;Date.now()-D>=1e4&&A&&A()},1e3),N("connected")}catch(c){console.error("LiveCall start error:",c),N("error",{error:c?.message||"RTC start failed"}),ce()}}function ue(e){let t=document.querySelector(".chatbot-toggler"),n=document.querySelector(".chat-actions"),o=t?t.querySelector("i"):null,c=document.querySelector(".pill-btn");function i(){o&&(o.className=n.classList.contains("show")?"bi bi-x-lg":"bi bi-chat-dots")}t&&t.addEventListener("click",()=>{n.classList.toggle("show")||n.classList.remove("show"),i()});let a=document.getElementById("pill-toggle");a&&a.addEventListener("click",()=>{let r=e.getPage();r&&localStorage.setItem("chatbot_prev_page",r),document.body.classList.remove("show-chatbot"),i()}),c&&c.addEventListener("click",r=>{r.preventDefault();try{window.open("https://share-eu1.hsforms.com/2U7ipluaKRqy_okiu5ErdUA2es2nu","_blank","noopener,noreferrer")}catch{window.location.href="https://share-eu1.hsforms.com/2U7ipluaKRqy_okiu5ErdUA2es2nu"}});let s=document.getElementById("action-chat"),p=document.getElementById("action-call");s&&s.addEventListener("click",()=>{n.classList.remove("show"),document.body.classList.add("show-chatbot"),i();let r=localStorage.getItem("chatbot_current_page"),d=localStorage.getItem("chatbot_user_name");e.setPage(r==="chat"||d?"chat":"welcome")}),p&&p.addEventListener("click",()=>{n.classList.remove("show"),document.body.classList.add("show-chatbot"),i(),e.setPage("call-welcome")})}function B(e,t){let n=document.querySelector(".chatbox");if(!n)return;let o=document.createElement("li");if(t==="typing")o.className="chat typing",o.innerHTML='<i class="bi bi-robot"></i><p class="typing"><span></span><span></span><span></span></p>';else{let c=t==="error"?"error":t;o.className=`chat ${c}`,c==="incoming"?o.innerHTML=`<i class="bi bi-robot"></i><div class="bubble">${Te(e)}</div>`:c==="error"?o.innerHTML=`<i class="bi bi-robot"></i><p>${Z(e).replace(/\n/g,"<br>")}</p>`:o.innerHTML=`<p>${Z(e).replace(/\n/g,"<br>")}</p>`}return n.appendChild(o),n.scrollTop=n.scrollHeight,o}function Z(e){return(e||"").replace(/[&<>]/g,t=>({"&":"&amp;","<":"&lt;",">":"&gt;"})[t])}function Te(e){let n=Z(e||"").split(`
+`),o="",c=!1,i=null;function a(){i&&(o+=`</${i}>`,i=null)}function s(p){return p.replace(/`([^`]+)`/g,"<code>$1</code>").replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>").replace(/\*([^*]+)\*/g,"<em>$1</em>")}for(let p=0;p<n.length;p++){let r=n[p];if(r.trim().startsWith("```")){c?(c=!1,o+="</code></pre>"):(a(),c=!0,o+="<pre><code>");continue}if(c){o+=r+`
+`;continue}if(/^###\s+/.test(r)){a(),o+="<h3>"+r.replace(/^###\s+/,"")+"</h3>";continue}if(/^##\s+/.test(r)){a(),o+="<h2>"+r.replace(/^##\s+/,"")+"</h2>";continue}if(/^#\s+/.test(r)){a(),o+="<h1>"+r.replace(/^#\s+/,"")+"</h1>";continue}if(/^\s*\d+\.\s+/.test(r)){let d=r.replace(/^\s*\d+\.\s+/,"");i!=="ol"&&(a(),i="ol",o+="<ol>"),o+="<li>"+s(d)+"</li>";continue}if(/^\s*[-*]\s+/.test(r)){let d=r.replace(/^\s*[-*]\s+/,"");i!=="ul"&&(a(),i="ul",o+="<ul>"),o+="<li>"+s(d)+"</li>";continue}if(r.trim()===""){a();continue}a(),o+="<p>"+s(r)+"</p>"}return a(),o}function me(e){return`chatbot_history_${e||"default"}`}function se(e){try{return JSON.parse(localStorage.getItem(me(e)))||[]}catch{return[]}}function ie(e,t){try{localStorage.setItem(me(e),JSON.stringify(t))}catch{}}function le(e){e.forEach(t=>B(t.text,t.type))}var de="https://api.zentai.cloud/api/v1";function ge(e,t){let n=e.getPage(),o=t&&t.bot,c=t&&t.chatbotID,i=o&&o.welcome_message||"Hello! How can I help you today?";if(n==="welcome"){let a=document.getElementById("start-conversation");a&&a.addEventListener("click",()=>e.setPage("prechat"));let s=document.getElementById("footer-chat");s&&s.addEventListener("click",()=>e.setPage("prechat"));let p=document.getElementById("footer-call");p&&p.addEventListener("click",()=>e.setPage("call-welcome"))}else if(n==="call-welcome"){let a=document.getElementById("call-welcome-back"),s=document.getElementById("call-welcome-start");a&&a.addEventListener("click",()=>e.setPage("welcome")),s&&s.addEventListener("click",()=>e.setPage("precall"));let p=document.getElementById("footer-call"),r=document.getElementById("footer-chat");p&&p.classList.add("active"),r&&r.classList.remove("active"),r&&r.addEventListener("click",()=>e.setPage("prechat"))}else if(n==="prechat"){let h=function(l){return/.+@.+\..+/.test((l||"").trim())},y=function(){let l=(p&&p.value||"").trim(),m=(r&&r.value||"").trim(),g=d&&d.value||"",w=(u&&u.value||"").trim(),x=(_&&_.value||"").trim(),E=w.length>=7,v=!!l&&h(m)&&!!g&&E&&!!x;s&&(s.disabled=!v)},a=document.getElementById("prechat-form");j("country-code","+234");let s=document.getElementById("start-chat-btn"),p=document.getElementById("prechat-name"),r=document.getElementById("prechat-email"),d=document.getElementById("country-code"),u=document.getElementById("prechat-phone"),_=document.getElementById("prechat-question");y(),p&&p.addEventListener("input",y),r&&r.addEventListener("input",y),d&&d.addEventListener("change",y),u&&u.addEventListener("input",y),_&&_.addEventListener("input",y),a&&a.addEventListener("submit",l=>{if(l&&l.preventDefault&&l.preventDefault(),s&&s.disabled)return;let m=(document.getElementById("prechat-name").value||"").trim(),g=(document.getElementById("prechat-email").value||"").trim(),w=document.getElementById("country-code").value||"",x=(document.getElementById("prechat-phone").value||"").trim(),E=(document.getElementById("prechat-question").value||"").trim();localStorage.setItem("chatbot_user_name",m),localStorage.setItem("chatbot_user_email",g),localStorage.setItem("chatbot_user_phone",`${w}${x}`),localStorage.setItem("chatbot_user_question",E),e.setPage("chat")}),s&&s.addEventListener("click",()=>{let l=document.getElementById("prechat-form");s&&s.disabled||l&&l.dispatchEvent(new Event("submit"))});let k=document.getElementById("prechat-back-btn");k&&k.addEventListener("click",()=>e.setPage("welcome"));let f=document.getElementById("footer-chat"),b=document.getElementById("footer-call");f&&f.addEventListener("click",()=>e.setPage("prechat")),b&&b.addEventListener("click",()=>e.setPage("precall")),f&&f.classList.add("active"),b&&b.classList.remove("active")}else if(n==="chat"){let y=function(){let l=localStorage.getItem("chatbot_session_id");return l||(l="xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,function(m){let g=Math.random()*16|0;return(m==="x"?g:g&3|8).toString(16)}),localStorage.setItem("chatbot_session_id",l)),l},k=function(l,m){m!=="error"&&(d.push({text:l,type:m,ts:Date.now()}),ie(c,d))},a=localStorage.getItem("chatbot_user_name")||"Guest",s=localStorage.getItem("chatbot_user_email")||"",p=localStorage.getItem("chatbot_user_phone")||"",r=localStorage.getItem("chatbot_user_question")||"",d=se(c);d.length>0?le(d):B(i,"incoming");let u=document.getElementById("chat-input"),_=document.getElementById("send-btn"),h=document.getElementById("attach-btn");async function f(l){B(l,"outgoing"),k(l,"outgoing");let m=document.querySelector(".chatbox li:last-child");if(m&&m.classList.contains("outgoing")){let x=document.createElement("span");x.className="sender-tag",x.textContent=a||"You",m.appendChild(x)}let g=pe(),w={session_id:y(),message:l,user_email:s,user_name:a,user_phone:p};try{if(!c)throw new Error("Missing chatbotID");let x=await fetch(`${de}/chatbots/widget/${encodeURIComponent(c)}/chat/`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(w)}),E=x.ok,v=E?await x.json():null;if(g(),!E)throw new Error("Request failed");let S=v&&v.bot_message&&v.bot_message.message||v?.data?.response||v?.response||v?.message||"Okay.";B(S,"incoming"),k(S,"incoming")}catch{g(),B("Could not process your request at the moment. Please try again.","error")}}r&&d.length===0&&f(r),_&&_.addEventListener("click",()=>{let l=(u&&u.value||"").trim();l&&(u.value="",f(l))}),u&&u.addEventListener("keydown",l=>{if(l.key==="Enter"&&!l.shiftKey){l.preventDefault();let m=(u&&u.value||"").trim();if(!m)return;u.value="",f(m)}}),h&&h.addEventListener("click",()=>{});let b=document.getElementById("chat-back-btn");b&&b.addEventListener("click",()=>e.setPage("prechat"))}else{if(n==="call-welcome"||n==="precall"||n==="call"||n==="postcall-transfer")return re(e,t);if(n==="prechat"){let a=document.getElementById("prechat-form");a&&a.addEventListener("submit",()=>{let u=(document.getElementById("prechat-name").value||"").trim(),_=(document.getElementById("prechat-email").value||"").trim(),h=document.getElementById("country-code").value||"",y=(document.getElementById("prechat-phone").value||"").trim(),k=(document.getElementById("prechat-question").value||"").trim();localStorage.setItem("chatbot_user_name",u),localStorage.setItem("chatbot_user_email",_),localStorage.setItem("chatbot_user_phone",`${h}${y}`),localStorage.setItem("chatbot_user_question",k),e.setPage("chat")});let s=document.getElementById("start-chat-btn");s&&s.addEventListener("click",()=>{let u=document.getElementById("prechat-form");u&&u.dispatchEvent(new Event("submit"))});let p=document.getElementById("prechat-back-btn");p&&p.addEventListener("click",()=>e.setPage("welcome"));let r=document.getElementById("footer-chat"),d=document.getElementById("footer-call");r&&r.addEventListener("click",()=>e.setPage("prechat")),d&&d.addEventListener("click",()=>e.setPage("precall")),r&&r.classList.add("active"),d&&d.classList.remove("active")}else if(n==="chat"){let y=function(){let l=localStorage.getItem("chatbot_session_id");return l||(l="xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,function(m){let g=Math.random()*16|0;return(m==="x"?g:g&3|8).toString(16)}),localStorage.setItem("chatbot_session_id",l)),l},k=function(l,m){m!=="error"&&(d.push({text:l,type:m,ts:Date.now()}),ie(c,d))},a=localStorage.getItem("chatbot_user_name")||"Guest",s=localStorage.getItem("chatbot_user_email")||"",p=localStorage.getItem("chatbot_user_phone")||"",r=localStorage.getItem("chatbot_user_question")||"",d=se(c);d.length>0?le(d):B(i,"incoming");let u=document.getElementById("chat-input"),_=document.getElementById("send-btn"),h=document.getElementById("attach-btn");async function f(l){B(l,"outgoing"),k(l,"outgoing");let m=document.querySelector(".chatbox li:last-child");if(m&&m.classList.contains("outgoing")){let x=document.createElement("span");x.className="sender-tag",x.textContent=a||"You",m.appendChild(x)}let g=pe(),w={session_id:y(),message:l,user_email:s,user_name:a,user_phone:p};try{if(!c)throw new Error("Missing chatbotID");let x=await fetch(`${de}/chatbots/widget/${encodeURIComponent(c)}/chat/`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(w)}),E=x.ok,v=E?await x.json():null;if(g(),!E)throw new Error("Request failed");let S=v&&v.bot_message&&v.bot_message.message||v?.data?.response||v?.response||v?.message||"Okay.";B(S,"incoming"),k(S,"incoming")}catch{g(),B("Could not process your request at the moment. Please try again.","error")}}r&&d.length===0&&f(r),_&&_.addEventListener("click",()=>{let l=(u&&u.value||"").trim();l&&(u.value="",f(l))}),u&&u.addEventListener("keydown",l=>{if(l.key==="Enter"&&!l.shiftKey){l.preventDefault();let m=(u&&u.value||"").trim();if(!m)return;u.value="",f(m)}}),h&&h.addEventListener("click",()=>{});let b=document.getElementById("chat-back-btn");b&&b.addEventListener("click",()=>e.setPage("prechat"))}else if(n==="call-welcome"){let a=document.getElementById("call-back"),s=document.getElementById("call-end");a&&a.addEventListener("click",()=>e.setPage("call-welcome")),s&&s.addEventListener("click",()=>e.setPage("call-welcome"))}}}function pe(){let e=B("","typing");return function(){e&&e.parentNode&&e.parentNode.removeChild(e)}}window.addEventListener("chatbot-call-status",e=>{});window.addEventListener("chatbot-call-status",e=>{let t=e?.detail?.status||"",n=document.getElementById("call-end"),o=t==="connecting";n&&(n.classList.toggle("loading",o),n.disabled=o)});var Me="Zentrova",ze="https://api.zentai.cloud/api/v1";function $e(){let e=document.createElement("button");e.className="chatbot-toggler",e.setAttribute("aria-label","Open chat"),e.innerHTML='<i class="bi bi-chat-dots"></i>';let t=document.createElement("div");t.className="chat-actions",t.innerHTML=`
     <button id="action-chat" class="chat-action"><i class="bi bi-chat-dots"></i> Chat</button>
     <button id="action-call" class="chat-action"><i class="bi bi-telephone"></i> Call</button>
-  `;
-    const pill = document.createElement("div");
-    pill.className = "powered-pill";
-    pill.innerHTML = `
+  `;let n=document.createElement("div");n.className="powered-pill",n.innerHTML=`
     <span>Powered by <span class="brand">Zentrova</span></span>
     <button class="pill-btn">Create Yours</button>
     <button id="pill-toggle" class="pill-toggle" aria-label="Hide"><i class="bi bi-chevron-down"></i></button>
-  `;
-    const shell = document.createElement("div");
-    shell.className = "chatbot";
-    shell.innerHTML = '<div id="chatbot-content"></div>';
-    document.body.appendChild(toggle);
-    document.body.appendChild(actions);
-    document.body.appendChild(pill);
-    document.body.appendChild(shell);
-    const contentRoot = shell.querySelector("#chatbot-content");
-    return { toggle, actions, pill, shell, contentRoot };
-  }
-  function applyPosition(position) {
-    const toggle = document.querySelector(".chatbot-toggler");
-    const actions = document.querySelector(".chat-actions");
-    const shell = document.querySelector(".chatbot");
-    const pill = document.querySelector(".powered-pill");
-    const right = position === "bottom-left" ? "unset" : "24px";
-    const left = position === "bottom-left" ? "24px" : "unset";
-    [toggle, actions, shell, pill].forEach((el) => {
-      if (!el) return;
-      el.style.right = right;
-      el.style.left = left;
-    });
-  }
-  async function fetchBotDetails(chatbotID) {
-    const res = await fetch(`${BASE_URL3}/chatbots/widget/${encodeURIComponent(chatbotID)}/`, { method: "GET" });
-    if (!res.ok) throw new Error("Failed to load bot configuration");
-    return res.json();
-  }
-  async function createSDK({ agentId, position, brandColor, brandName } = {}) {
-    const chatbotID = agentId;
-    try {
-      const prevId = localStorage.getItem("chatbot_id");
-      if (prevId && chatbotID && prevId !== chatbotID) {
-        localStorage.clear();
-      }
-    } catch (_) {
-    }
-    importFonts();
-    injectStyles();
-    let bot = null;
-    try {
-      bot = chatbotID ? await fetchBotDetails(chatbotID) : null;
-    } catch (e) {
-    }
-    const effectiveBrand = bot && bot.brand_color || brandColor || "#5b2a86";
-    const effectivePosition = bot && bot.widget_settings && bot.widget_settings.position || position || "bottom-right";
-    const autoOpen = !!(bot && bot.widget_settings && bot.widget_settings.auto_open);
-    const name = bot && (bot.name || bot.organization_name) || brandName || DEFAULT_BRAND;
-    const welcomeMessage = bot && bot.welcome_message || "Hello! How can I help you today?";
-    try {
-      localStorage.setItem("chatbot_id", chatbotID || "");
-      localStorage.setItem("chatbot_bot_voice", bot && bot.voice || "alloy");
-      localStorage.setItem("chatbot_bot_language", bot && bot.language || "English");
-      localStorage.setItem("chatbot_bot_welcome_message", welcomeMessage);
-      localStorage.setItem("chatbot_transfer_phone_number", bot && bot?.transfer_phone_number || "");
-    } catch (_) {
-    }
-    applyBrand(effectiveBrand);
-    const { toggle, actions, pill, shell, contentRoot } = createShell();
-    applyPosition(effectivePosition);
-    const routes = getRoutes(name);
-    const ctx = { chatbotID, bot, brandColor: effectiveBrand, position: effectivePosition, brandName: name, welcomeMessage };
-    const router = new Router(contentRoot, routes, () => bindViewEvents(router, ctx));
-    (function ensureSessionId() {
-      let sid = localStorage.getItem("chatbot_session_id");
-      if (!sid) {
-        sid = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
-          const r = Math.random() * 16 | 0, v = c === "x" ? r : r & 3 | 8;
-          return v.toString(16);
-        });
-        localStorage.setItem("chatbot_session_id", sid);
-      }
-    })();
-    const storedPage = localStorage.getItem("chatbot_current_page");
-    if (storedPage) router.currentPage = storedPage;
-    wireShellEvents(router);
-    router.render();
-  }
-  function init({ agentId, position = "bottom-right", brandColor = "#5b2a86", brandName } = {}) {
-    createSDK({ agentId, position, brandColor, brandName });
-  }
-  var ChatbotSDK = { init };
-  if (typeof window !== "undefined") window.ChatbotSDK = ChatbotSDK;
-  return __toCommonJS(chatbot_sdk_exports);
-})();
+  `;let o=document.createElement("div");o.className="chatbot",o.innerHTML='<div id="chatbot-content"></div>',document.body.appendChild(e),document.body.appendChild(t),document.body.appendChild(n),document.body.appendChild(o);let c=o.querySelector("#chatbot-content");return{toggle:e,actions:t,pill:n,shell:o,contentRoot:c}}function De(e){let t=document.querySelector(".chatbot-toggler"),n=document.querySelector(".chat-actions"),o=document.querySelector(".chatbot"),c=document.querySelector(".powered-pill"),i=e==="bottom-left"?"unset":"24px",a=e==="bottom-left"?"24px":"unset";[t,n,o,c].forEach(s=>{s&&(s.style.right=i,s.style.left=a)})}async function Ne(e){let t=await fetch(`${ze}/chatbots/widget/${encodeURIComponent(e)}/`,{method:"GET"});if(!t.ok)throw new Error("Failed to load bot configuration");return t.json()}async function Re({agentId:e,position:t,brandColor:n,brandName:o}={}){let c=e;try{let g=localStorage.getItem("chatbot_id");g&&c&&g!==c&&localStorage.clear()}catch{}ee(),te();let i=null;try{i=c?await Ne(c):null}catch{}let a=i&&i.brand_color||n||"#5b2a86",s=i&&i.widget_settings&&i.widget_settings.position||t||"bottom-right",p=!!(i&&i.widget_settings&&i.widget_settings.auto_open),r=i&&(i.name||i.organization_name)||o||Me,d=i&&i.welcome_message||"Hello! How can I help you today?";try{localStorage.setItem("chatbot_id",c||""),localStorage.setItem("chatbot_bot_voice",i&&i.voice||"alloy"),localStorage.setItem("chatbot_bot_language",i&&i.language||"English"),localStorage.setItem("chatbot_bot_welcome_message",d),localStorage.setItem("chatbot_transfer_phone_number",i&&i?.transfer_phone_number||"")}catch{}oe(a);let{toggle:u,actions:_,pill:h,shell:y,contentRoot:k}=$e();De(s);let f=ne(r),b={chatbotID:c,bot:i,brandColor:a,position:s,brandName:r,welcomeMessage:d},l=new q(k,f,()=>ge(l,b));(function(){let w=localStorage.getItem("chatbot_session_id");w||(w="xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,function(x){let E=Math.random()*16|0;return(x==="x"?E:E&3|8).toString(16)}),localStorage.setItem("chatbot_session_id",w))})();let m=localStorage.getItem("chatbot_current_page");m&&(l.currentPage=m),ue(l),l.render()}function fe({agentId:e,position:t="bottom-right",brandColor:n="#5b2a86",brandName:o}={}){Re({agentId:e,position:t,brandColor:n,brandName:o})}var he={init:fe};typeof window<"u"&&(window.ChatbotSDK=he);return _e(Oe);})();
