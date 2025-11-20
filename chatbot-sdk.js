@@ -7,7 +7,7 @@ import { wireShellEvents, bindViewEvents } from './sdk/events.js';
 
 
 const DEFAULT_BRAND = 'Zentrova';
-const BASE_URL = 'https://api.zentai.cloud/api/v1';
+const BASE_URL = 'https://api-staging.zentai.cloud/api/v1';
 
 // Inject shell elements required by events and router
 function createShell() {

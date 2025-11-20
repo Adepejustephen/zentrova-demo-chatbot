@@ -1,8 +1,8 @@
 // Call module: handle call-welcome, precall, and live call lifecycle
 import { populateCountrySelect } from './countries.js';
 // Module globals
-const BASE_URL = 'https://api.zentai.cloud/api/v1';
-const CHATBOT_BASE_URL = 'https://chatbot.zentai.cloud/';
+const BASE_URL = 'https://api-staging.zentai.cloud/api/v1';
+const CHATBOT_BASE_URL = 'https://chatbot-staging.zentai.cloud/';
 let callWS = null;
 let callAudioContext = null;
 let callAudioSource = null;

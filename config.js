@@ -11,7 +11,7 @@ console.log("env",appEnv)
 
   const chatbotBaseUrl =
     appEnv === 'staging'
-      ? (env.API_CHATBOT_BASE_URL || 'https://zentrova-chatbot.mygrantgenie.com/')
+      ? (env.API_CHATBOT_BASE_URL || 'https://chatbot-staging.zentai.cloud/')
       : (env.API_CHATBOT_BASE_PROD_URL || env.API_CHATBOT_BASE_URL || 'https://zentrova-chatbot.mygrantgenie.com/');
 
   return { baseUrl, chatbotBaseUrl };
