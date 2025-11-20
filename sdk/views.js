@@ -41,7 +41,7 @@ export function getRoutes(name = 'Zentrova') {
                 <input id="prechat-phone" type="tel" placeholder="Phone" />
               </div>
               <input id="prechat-question" type="text" placeholder="What is your question?" />
-              <button id="start-chat-btn" class="prechat-start-btn" type="submit"><i class="bi bi-send-fill"></i><span>Start Chat</span></button>
+              <button id="start-chat-btn" class="prechat-start-btn" type="submit" disabled><i class="bi bi-send-fill"></i><span>Start Chat</span></button>
             </form>
           </div>
         </div>
@@ -125,7 +125,11 @@ export function getRoutes(name = 'Zentrova') {
               </select>
               <input id="precall-phone" type="tel" placeholder="Phone" />
             </div>
-            <button id="precall-start" class="prechat-start-btn" type="submit"><i class="bi bi-send-fill"></i><span>Start Call</span></button>
+            <div class="checkbox-row" style="display:flex; align-items:center; gap:8px;">
+              <input id="precall-consent" type="checkbox" />
+              <label for="precall-consent" style="font-size: 12px; color: var(--muted);">By sharing your details, you agree to our GDPR/CCPA-compliant collection and use of your data for AI support services.</label>
+            </div>
+            <button id="precall-start" class="prechat-start-btn" type="submit" disabled><i class="bi bi-send-fill"></i><span>Start Call</span></button>
           </form>
         </div>
         <div class="welcome-footer">

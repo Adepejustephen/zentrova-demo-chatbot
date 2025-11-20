@@ -1,4 +1,5 @@
 // Call module: handle call-welcome, precall, and live call lifecycle
+import { populateCountrySelect } from './countries.js';
 // Module globals
 const BASE_URL = 'https://api.zentai.cloud/api/v1';
 const CHATBOT_BASE_URL = 'https://chatbot.zentai.cloud/';
@@ -317,6 +318,31 @@ export function bindCallViewEvents(router, ctx) {
     const form = document.getElementById('precall-form');
     const startBtn = document.getElementById('precall-start');
     const backBtn = document.getElementById('precall-back');
+    const nameInput = document.getElementById('precall-name');
+    const countrySelect = document.getElementById('precall-country');
+    const phoneInput = document.getElementById('precall-phone');
+    const consentCheckbox = document.getElementById('precall-consent');
+
+    // Populate countries for precall
+    populateCountrySelect('precall-country', '+234');
+
+    function validatePrecallForm() {
+      const name = (nameInput && nameInput.value || '').trim();
+      const phone = (phoneInput && phoneInput.value || '').trim();
+      const hasPhone = phone.length >= 7; // basic length check
+      const consent = !!(consentCheckbox && consentCheckbox.checked);
+      const isValid = !!name && hasPhone && consent;
+      if (startBtn) startBtn.disabled = !isValid;
+    }
+
+    // Initialize disabled state
+    validatePrecallForm();
+
+    // Revalidate on changes
+    nameInput && nameInput.addEventListener('input', validatePrecallForm);
+    phoneInput && phoneInput.addEventListener('input', validatePrecallForm);
+    countrySelect && countrySelect.addEventListener('change', validatePrecallForm);
+    consentCheckbox && consentCheckbox.addEventListener('change', validatePrecallForm);
 
     function setPrecallBusy(busy) {
       if (startBtn) startBtn.disabled = !!busy;
@@ -381,8 +407,8 @@ export function bindCallViewEvents(router, ctx) {
       }
     }
 
-    form && form.addEventListener('submit', (e) => { e.preventDefault(); initCall(); });
-    startBtn && startBtn.addEventListener('click', (e) => { e.preventDefault(); initCall(); });
+    form && form.addEventListener('submit', (e) => { e.preventDefault(); if (startBtn && startBtn.disabled) return; initCall(); });
+    startBtn && startBtn.addEventListener('click', (e) => { e.preventDefault(); if (startBtn && startBtn.disabled) return; initCall(); });
     backBtn && backBtn.addEventListener('click', () => router.setPage('call-welcome'));
     return;
   }

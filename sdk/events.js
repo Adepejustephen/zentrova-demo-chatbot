@@ -1,11 +1,13 @@
 // Shell interactions and page-specific bindings (match chatbot.html)
 import { bindCallViewEvents } from './call.js';
+import { populateCountrySelect } from './countries.js';
 
 // wireShellEvents(router)
 export function wireShellEvents(router) {
   const toggleBtn = document.querySelector('.chatbot-toggler');
   const actions = document.querySelector('.chat-actions');
   const toggleIcon = toggleBtn ? toggleBtn.querySelector('i') : null;
+  const pillCta = document.querySelector('.pill-btn');
 
   function updateTogglerIcon() {
     if (!toggleIcon) return;
@@ -24,6 +26,17 @@ export function wireShellEvents(router) {
     if (prev) localStorage.setItem('chatbot_prev_page', prev);
     document.body.classList.remove('show-chatbot');
     updateTogglerIcon();
+  });
+
+  // Open external link for "Create Yours" pill button in a new tab
+  pillCta && pillCta.addEventListener('click', (e) => {
+    e.preventDefault();
+    try {
+      window.open('https://share-eu1.hsforms.com/2U7ipluaKRqy_okiu5ErdUA2es2nu', '_blank', 'noopener,noreferrer');
+    } catch (_) {
+      // Fallback: navigate current tab if window.open blocked
+      window.location.href = 'https://share-eu1.hsforms.com/2U7ipluaKRqy_okiu5ErdUA2es2nu';
+    }
   });
 
   const actionChat = document.getElementById('action-chat');
@@ -158,7 +171,40 @@ export function bindViewEvents(router, ctx) {
   } else if (page === 'prechat') {
     // Store user info
     const form = document.getElementById('prechat-form');
-    form && form.addEventListener('submit', () => {
+    // Populate the country selector with all world countries
+    populateCountrySelect('country-code', '+234');
+
+    // Validation: disable Start until all fields valid
+    const startBtn = document.getElementById('start-chat-btn');
+    const nameInput = document.getElementById('prechat-name');
+    const emailInput = document.getElementById('prechat-email');
+    const codeSelect = document.getElementById('country-code');
+    const phoneInput = document.getElementById('prechat-phone');
+    const questionInput = document.getElementById('prechat-question');
+
+    function isValidEmail(v) {
+      return /.+@.+\..+/.test((v || '').trim());
+    }
+    function validatePrechatForm() {
+      const name = (nameInput && nameInput.value || '').trim();
+      const email = (emailInput && emailInput.value || '').trim();
+      const code = codeSelect && codeSelect.value || '';
+      const phone = (phoneInput && phoneInput.value || '').trim();
+      const question = (questionInput && questionInput.value || '').trim();
+      const hasPhone = phone.length >= 7;
+      const isValid = !!name && isValidEmail(email) && !!code && hasPhone && !!question;
+      if (startBtn) startBtn.disabled = !isValid;
+    }
+    // Initialize and revalidate on change
+    validatePrechatForm();
+    nameInput && nameInput.addEventListener('input', validatePrechatForm);
+    emailInput && emailInput.addEventListener('input', validatePrechatForm);
+    codeSelect && codeSelect.addEventListener('change', validatePrechatForm);
+    phoneInput && phoneInput.addEventListener('input', validatePrechatForm);
+    questionInput && questionInput.addEventListener('input', validatePrechatForm);
+    form && form.addEventListener('submit', (e) => {
+      e && e.preventDefault && e.preventDefault();
+      if (startBtn && startBtn.disabled) return;
       const name = (document.getElementById('prechat-name').value || '').trim();
       const email = (document.getElementById('prechat-email').value || '').trim();
       const code = document.getElementById('country-code').value || '';
@@ -172,9 +218,9 @@ export function bindViewEvents(router, ctx) {
    
       router.setPage('chat');
     });
-    const startBtn = document.getElementById('start-chat-btn');
     startBtn && startBtn.addEventListener('click', () => {
       const formEl = document.getElementById('prechat-form');
+      if (startBtn && startBtn.disabled) return;
       formEl && formEl.dispatchEvent(new Event('submit'));
     });
     const preBack = document.getElementById('prechat-back-btn');
