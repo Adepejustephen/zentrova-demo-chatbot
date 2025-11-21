@@ -205,13 +205,13 @@ export function bindViewEvents(router, ctx) {
     form && form.addEventListener('submit', (e) => {
       e && e.preventDefault && e.preventDefault();
       if (startBtn && startBtn.disabled) return;
-      const name = (document.getElementById('prechat-name').value || '').trim();
-      const email = (document.getElementById('prechat-email').value || '').trim();
+      const name = (document.getElementById('prechat-name').value || 'Guest').trim();
+      const email = (document.getElementById('prechat-email').value || 'None').trim();
       const code = document.getElementById('country-code').value || '';
       const phone = (document.getElementById('prechat-phone').value || '').trim();
       const question = (document.getElementById('prechat-question').value || '').trim();
     
-      localStorage.setItem('chatbot_user_name', name);
+      localStorage.setItem('chatbot_user_name', name );
       localStorage.setItem('chatbot_user_email', email);
       localStorage.setItem('chatbot_user_phone', `${code}${phone}`);
       localStorage.setItem('chatbot_user_question', question);
@@ -285,8 +285,8 @@ export function bindViewEvents(router, ctx) {
       const payload = {
         session_id: getSessionId(),
         message: userText,
-        user_email: email,
-        user_name: name,
+        user_email: email ?? "Guest",
+        user_name: name?? "Guest",
         user_phone: phone
       };
       try {
@@ -358,7 +358,7 @@ export function bindViewEvents(router, ctx) {
       const code = document.getElementById('country-code').value || '';
       const phone = (document.getElementById('prechat-phone').value || '').trim();
       const question = (document.getElementById('prechat-question').value || '').trim();
-      localStorage.setItem('chatbot_user_name', name);
+      localStorage.setItem('chatbot_user_name', name ?? "Guest");
       localStorage.setItem('chatbot_user_email', email);
       localStorage.setItem('chatbot_user_phone', `${code}${phone}`);
       localStorage.setItem('chatbot_user_question', question);

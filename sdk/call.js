@@ -331,8 +331,8 @@ export function bindCallViewEvents(router, ctx) {
       const phone = (phoneInput && phoneInput.value || '').trim();
       const hasPhone = phone.length >= 7; // basic length check
       const consent = !!(consentCheckbox && consentCheckbox.checked);
-      const isValid = !!name && hasPhone && consent;
-      if (startBtn) startBtn.disabled = !isValid;
+      // const isValid = !!name && hasPhone && consent;
+      // if (startBtn) startBtn.disabled = !isValid;
     }
 
     // Initialize disabled state
@@ -356,13 +356,13 @@ export function bindCallViewEvents(router, ctx) {
       callInitInProgress = true;
       setPrecallBusy(true);
 
-      const name = (document.getElementById('precall-name').value || '').trim();
+      const name = (document.getElementById('precall-name').value || 'Guest').trim();
       const code = document.getElementById('precall-country').value || '';
       const phone = (document.getElementById('precall-phone').value || '').trim();
       const message = localStorage.getItem('chatbot_user_question') || 'Start call';
 
       try {
-        localStorage.setItem('chatbot_user_name', name);
+        localStorage.setItem('chatbot_user_name', name );
         localStorage.setItem('chatbot_user_phone', `${code}${phone}`);
         localStorage.setItem('chatbot_user_question', message);
       } catch (_) {}
@@ -375,7 +375,7 @@ export function bindCallViewEvents(router, ctx) {
         const res = await fetch(`${BASE_URL}/chatbots/call/${encodeURIComponent(chatbotID)}/start/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify({ user_phone: `${code}${phone}`, user_name: name })
+          body: JSON.stringify({ user_phone: `${code}${phone}`, user_name: name ?? "Guest" })
         });
         if (!res.ok) throw new Error('Call init failed');
         const data = await res.json();
