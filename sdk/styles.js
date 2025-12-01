@@ -16,19 +16,19 @@ export function injectStyles() {
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Manrope", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Arial, "Noto Sans", sans-serif; }
     .chatbot-toggler { position: fixed; right: 24px; bottom: 30px; height: 56px; width: 56px; border-radius: 50%; border: none; outline: none; cursor: pointer; background: var(--brand); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-2); z-index: 999; transition: transform 0.25s ease; }
     .chatbot-toggler i { font-size: 1.25rem; }
-    .chat-actions { position: fixed; right: 24px; bottom: 100px; display: none; flex-direction: column; gap: 12px; z-index: 999; filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.12)); }
+    .chat-actions { position: fixed; right: 24px; bottom: 90px; display: none; flex-direction: column; gap: 12px; z-index: 999; filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.12)); }
     .chat-actions.show { display: flex; }
     .show-chatbot .chat-actions { display: none !important; }
     .show-chatbot .chatbot-toggler { display: none; }
     .icon-btn { background: transparent; border: none; color: #fff; font-size: 20px; padding: 4px 8px; cursor: pointer; }
-    .powered-pill { position: fixed; right: 24px; bottom: 30px; display: none; align-items: center; gap: 8px; background: #fff; color: #111; border-radius: 999px; box-shadow: var(--shadow-1); padding: 6px 10px; z-index: 999; }
+    .powered-pill { position: fixed; right: 24px; bottom: 20px; display: none; align-items: center; gap: 8px; background: #fff; color: #111; border-radius: 999px; box-shadow: var(--shadow-1); padding: 6px 10px; z-index: 999; }
     .powered-pill .brand { font-weight: 700; color: var(--brand); font-size: 0.725rem; }
     .powered-pill span { font-weight: 500; font-size: 0.725rem; }
     .powered-pill .pill-btn { background: var(--brand); color: #fff; border: none; padding: 6px 10px; border-radius: 32px; cursor: pointer; font-size: 12px; }
     .powered-pill .pill-toggle { background: var(--brand); color: #fff; width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     .show-chatbot .powered-pill { display: flex; }
     .chat-action { background: var(--brand); color: #fff; border-radius: 12px; padding: 12px 16px; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 600; }
-    .chatbot { width: 420px; position: fixed; right: 24px; bottom: 100px; background: var(--bg); border-radius: var(--radius-lg); box-shadow: var(--shadow-2); overflow: hidden; transform: scale(0.5); opacity: 0; pointer-events: none; transition: all 0.25s ease; z-index: 999; }
+    .chatbot { width: 420px; position: fixed; right: 24px; bottom: 80px; background: var(--bg); border-radius: var(--radius-lg); box-shadow: var(--shadow-2); overflow: hidden; transform: scale(0.5); opacity: 0; pointer-events: none; transition: all 0.25s ease; z-index: 999; }
     .show-chatbot .chatbot { transform: scale(1); opacity: 1; pointer-events: auto; }
     header.chatbot-header { padding: var(--s-3); background: var(--brand); color: #fff; position: relative; }
     header.chatbot-header h2 { font-size: 18px; font-weight: 700; }
@@ -46,7 +46,7 @@ export function injectStyles() {
     /* Missing styles for Call buttons used in views.js */
     .call-primary { background: var(--brand); color: #fff; border: none; border-radius: 999px; padding: 10px 24px; font-weight: 700; cursor: pointer; box-shadow: var(--shadow-1); font-size: 0.875rem; }
     .call-primary:active { transform: scale(0.98); }
-    .welcome-header { color: #fff; margin-bottom: 32px; }
+    .welcome-header { color: #fff; margin-bottom: 20px; }
     .welcome-main { padding: var(--s-3); }
     .welcome-header h2 { color: #fff; font-size: 28px; font-weight: 700; margin-bottom: 8px; }
     .welcome-header p { color: #d6cce8; font-size: 0.835rem; max-width: 70%; }
@@ -55,19 +55,19 @@ export function injectStyles() {
     .start-conversation-btn .subtitle { font-size: 12px; color: var(--muted); margin-top: 4px; }
     .start-conversation-btn .cta-arrow { color: var(--brand); font-size: 24px; }
     .welcome-footer { background: #fff; border-top: 1px solid #e5e7eb; padding: 14px 32px; border-radius: 0 0 var(--radius-lg) var(--radius-lg); display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
-    .welcome-footer .footer-action { display: flex; flex-direction: column; align-items: center; gap: 6px; color: #6b7280; font-weight: 500; background: transparent; border: none; cursor: pointer; font-size: 0.875rem; }
-    .welcome-footer .footer-action i { font-size: 18px; color: #6b7280; }
+    .welcome-footer .footer-action { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #6b7280; font-weight: 500; background: transparent; border: none; cursor: pointer; font-size: 0.75rem; }
+    .welcome-footer .footer-action i { font-size: 14px; color: #6b7280; }
     .prechat-main { padding: var(--s-3); }
     .prechat-intro { color: #d6cce8; font-size: 0.875rem; max-width: 80%; margin: 8px 0 12px; }
     .prechat-card, .precall-card { background: #fff; border-radius: 18px; padding: var(--s-3); box-shadow: var(--shadow-1); color: var(--text); }
-    .prechat-start-btn { display: flex; align-items: center; gap: 8px; background: var(--brand); color: #fff; border: none; border-radius: 999px; padding: 10px 14px; font-weight: 700; cursor: pointer; width: max-content; font-size: 0.875rem; }
+    .prechat-start-btn { display: flex; align-items: center; gap: 8px; background: var(--brand); color: #fff; border: none; border-radius: 999px; padding: 10px 14px; font-weight: 700; cursor: pointer; width: max-content; font-size: 0.75rem; }
     .prechat-start-btn i { font-size: 14px; }
     .prechat-start-btn span { font-size: 0.875rem; }
     .welcome-footer .footer-action.active { color: var(--brand); }
     .welcome-footer .footer-action.active i { color: var(--brand); }
     .prechat-form { display: flex; flex-direction: column; gap: 10px; padding: var(--s-1); }
     .prechat-form label { font-size: 12px; color: var(--muted); }
-    .prechat-form input, .prechat-form select, .prechat-form textarea { padding: 12px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 14px; outline: none; background: #fff; }
+    .prechat-form input, .prechat-form select, .prechat-form textarea { padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 14px; outline: none; background: #fff; }
     .country-row { display: grid; grid-template-columns: 90px 1fr; gap: 8px; }
     .btn-primary { background: var(--brand); color: #fff; border: none; border-radius: 10px; padding: 12px; cursor: pointer; font-weight: 700; }
     .chat-header { display: flex; align-items: center; gap: 8px; padding: 14px 16px; background: var(--brand); color: #fff; border-radius: 14px 14px 0 0; font-weight: 700; }
@@ -92,7 +92,7 @@ export function injectStyles() {
     .outgoing { justify-content: flex-end; }
     .outgoing p { background: var(--user-bg); color: #111827; }
     .chat.typing p { background: var(--bot-bg); color: #111827; }
-
+.prechat-form-head{font-size: 0.75rem; font-weight: 300; color: var(--muted);}
     /* Bubble container for rich Markdown content */
     .chat .bubble { padding: 0px 8px; border-radius: 10px; max-width: 75%; font-size: 0.725rem; background: var(--bot-bg); color: #111827; }
     .incoming .bubble { background: var(--bot-bg); color: #111827; }

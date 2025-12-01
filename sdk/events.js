@@ -196,7 +196,7 @@ export function bindViewEvents(router, ctx) {
       if (startBtn) startBtn.disabled = !isValid;
     }
     // Initialize and revalidate on change
-    validatePrechatForm();
+    // validatePrechatForm();
     nameInput && nameInput.addEventListener('input', validatePrechatForm);
     emailInput && emailInput.addEventListener('input', validatePrechatForm);
     codeSelect && codeSelect.addEventListener('change', validatePrechatForm);
@@ -204,7 +204,7 @@ export function bindViewEvents(router, ctx) {
     questionInput && questionInput.addEventListener('input', validatePrechatForm);
     form && form.addEventListener('submit', (e) => {
       e && e.preventDefault && e.preventDefault();
-      if (startBtn && startBtn.disabled) return;
+      // if (startBtn && startBtn.disabled) return;
       const name = (document.getElementById('prechat-name').value || 'Guest').trim();
       const email = (document.getElementById('prechat-email').value || 'None').trim();
       const code = document.getElementById('country-code').value || '';

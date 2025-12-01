@@ -30,6 +30,7 @@ export function getRoutes(name = 'Zentrova') {
           <p class="prechat-intro">Hi, Welcome to ${name}. Let us know you and how we may help you?</p>
           <div class="prechat-card">
             <form id="prechat-form" class="prechat-form" onsubmit="return false;">
+            <span class="prechat-form-head">Optional</span>
               <input id="prechat-name" type="text" placeholder="Name" />
               <input id="prechat-email" type="email" placeholder="Email" />
               <div class="country-row">
@@ -115,6 +116,8 @@ export function getRoutes(name = 'Zentrova') {
         <div class="precall-card" style="margin: var(--s-2);">
           <p class="prechat-intro">Hi, Welcome to (${name}). Let us know you and how we may help you?</p>
           <form id="precall-form" class="prechat-form" onsubmit="return false;">
+          <span class="prechat-form-head">Optional</span>
+
             <input id="precall-name" type="text" placeholder="Name" />
            
             <div class="country-row">
